@@ -29,6 +29,7 @@ export type Database = {
           metadata: Json
           org_id: string
           professional_id: string | null
+          resolvido_em: string | null
           title: string
           type: string
           updated_at: string
@@ -48,6 +49,7 @@ export type Database = {
           metadata?: Json
           org_id: string
           professional_id?: string | null
+          resolvido_em?: string | null
           title: string
           type?: string
           updated_at?: string
@@ -67,6 +69,7 @@ export type Database = {
           metadata?: Json
           org_id?: string
           professional_id?: string | null
+          resolvido_em?: string | null
           title?: string
           type?: string
           updated_at?: string
@@ -98,7 +101,89 @@ export type Database = {
             foreignKeyName: "activities_professional_id_fkey"
             columns: ["professional_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agenda_bloqueios: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          fim: string
+          grupo_id: string | null
+          id: string
+          inicio: string
+          observacao: string | null
+          org_id: string
+          professional_id: string | null
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          fim: string
+          grupo_id?: string | null
+          id?: string
+          inicio: string
+          observacao?: string | null
+          org_id: string
+          professional_id?: string | null
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          fim?: string
+          grupo_id?: string | null
+          id?: string
+          inicio?: string
+          observacao?: string | null
+          org_id?: string
+          professional_id?: string | null
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agenda_bloqueios_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      anuncios: {
+        Row: {
+          ativo: boolean
+          canal: string | null
+          created_at: string
+          id: string
+          nome: string
+          org_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          canal?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          org_id: string
+        }
+        Update: {
+          ativo?: boolean
+          canal?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          org_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anuncios_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -156,39 +241,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      api_keys_registry: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          label: string | null
-          service_name: string
-          updated_at: string | null
-          user_id: string
-          vault_secret_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          label?: string | null
-          service_name: string
-          updated_at?: string | null
-          user_id: string
-          vault_secret_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          label?: string | null
-          service_name?: string
-          updated_at?: string | null
-          user_id?: string
-          vault_secret_id?: string
-        }
-        Relationships: []
       }
       audit_logs: {
         Row: {
@@ -712,6 +764,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           currency: string | null
+          dor_relatada: string | null
           expected_close_date: string | null
           id: string
           loss_reason_id: string | null
@@ -731,6 +784,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string | null
+          dor_relatada?: string | null
           expected_close_date?: string | null
           id?: string
           loss_reason_id?: string | null
@@ -750,6 +804,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           currency?: string | null
+          dor_relatada?: string | null
           expected_close_date?: string | null
           id?: string
           loss_reason_id?: string | null
@@ -1973,7 +2028,7 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           email: string
-          full_name: string
+          full_name?: string
           id: string
           is_active?: boolean
           is_approved?: boolean
@@ -2015,24 +2070,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      project_config: {
-        Row: {
-          key: string
-          updated_at: string | null
-          value: string
-        }
-        Insert: {
-          key: string
-          updated_at?: string | null
-          value: string
-        }
-        Update: {
-          key?: string
-          updated_at?: string | null
-          value?: string
-        }
-        Relationships: []
       }
       risk_rules: {
         Row: {
@@ -2271,15 +2308,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       webhooks: {
         Row: {
@@ -2337,9 +2366,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _pick_next_participant: { Args: { _rule_id: string }; Returns: string }
+      assign_lead_owner: {
+        Args: { _context?: Json; _org_id: string; _source: string }
+        Returns: string
+      }
+      audit_user_visibility: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: Json
+      }
+      create_organization_for_user: {
+        Args: {
+          p_name: string
+          p_settings?: Json
+          p_slug: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       current_org_id: { Args: never; Returns: string }
-      ensure_auth_trigger: { Args: never; Returns: Json }
-      get_handle_new_user_def: { Args: never; Returns: string }
+      get_directorate_user_ids: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string[]
+      }
+      get_team_user_ids: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: string[]
+      }
+      get_user_directorate_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
+      get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2347,8 +2405,31 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_org_owner: {
+        Args: { p_org_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      simulate_distribution: {
+        Args: { _count?: number; _rule_id: string }
+        Returns: {
+          step: number
+          user_id: string
+        }[]
+      }
+      user_belongs_to_org: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      activity_type:
+        | "call"
+        | "email"
+        | "meeting"
+        | "note"
+        | "task"
+        | "visit"
+        | "whatsapp"
       app_role:
         | "admin"
         | "supervisor"
@@ -2357,6 +2438,8 @@ export type Database = {
         | "director"
         | "manager"
         | "member"
+      contact_status: "lead" | "prospect" | "customer" | "churned"
+      deal_status: "open" | "won" | "lost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2372,12 +2455,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2401,11 +2484,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2426,11 +2509,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2451,11 +2534,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2468,11 +2551,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2484,6 +2567,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_type: [
+        "call",
+        "email",
+        "meeting",
+        "note",
+        "task",
+        "visit",
+        "whatsapp",
+      ],
       app_role: [
         "admin",
         "supervisor",
@@ -2493,6 +2585,8 @@ export const Constants = {
         "manager",
         "member",
       ],
+      contact_status: ["lead", "prospect", "customer", "churned"],
+      deal_status: ["open", "won", "lost"],
     },
   },
 } as const

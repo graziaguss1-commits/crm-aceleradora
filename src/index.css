@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Paleta da marca
+       Marrom mogno #5C3D2E · Cobre #B87333 · Azul marinho #1B2C4E
+       Marrom escuro #3A2218 · Off-white #FAF7F4 · Bege #EDE4DA · Quase-preto #1E1410 */
+    --background: 30 37% 97%;
+    --foreground: 18 41% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 18 41% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 18 41% 16%;
+    --primary: 20 33% 27%;
+    --primary-foreground: 30 37% 97%;
+    --secondary: 32 35% 93%;
+    --secondary-foreground: 20 33% 27%;
+    --muted: 32 35% 93%;
+    --muted-foreground: 20 12% 42%;
+    --accent: 29 57% 46%;
+    --accent-foreground: 30 37% 97%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 32 35% 89%;
+    --input: 32 35% 89%;
+    --ring: 29 57% 46%;
+    --radius: 0.5rem;
+    --sidebar-background: 30 30% 95%;
+    --sidebar-foreground: 20 25% 28%;
+    --sidebar-primary: 20 33% 27%;
+    --sidebar-primary-foreground: 30 37% 97%;
+    --sidebar-accent: 32 35% 89%;
+    --sidebar-accent-foreground: 20 33% 27%;
+    --sidebar-border: 32 35% 89%;
+    --sidebar-ring: 29 57% 46%;
+    --success: 152 45% 32%;
+    --success-foreground: 0 0% 100%;
+    --warning: 29 57% 46%;
+    --warning-foreground: 0 0% 100%;
+    /* Azul marinho: reservado para o contexto clínico */
+    --clinical: 220 49% 21%;
+    --clinical-foreground: 30 37% 97%;
+  }
+
+  .dark {
+    --background: 17 30% 9%;
+    --foreground: 30 30% 94%;
+    --card: 18 41% 13%;
+    --card-foreground: 30 30% 94%;
+    --popover: 18 41% 13%;
+    --popover-foreground: 30 30% 94%;
+    --primary: 29 57% 52%;
+    --primary-foreground: 17 30% 9%;
+    --secondary: 18 30% 17%;
+    --secondary-foreground: 30 30% 94%;
+    --muted: 18 30% 17%;
+    --muted-foreground: 30 12% 62%;
+    --accent: 29 57% 46%;
+    --accent-foreground: 30 37% 97%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 18 25% 20%;
+    --input: 18 25% 20%;
+    --ring: 29 57% 52%;
+    --sidebar-background: 18 35% 11%;
+    --sidebar-foreground: 30 25% 88%;
+    --sidebar-primary: 29 57% 52%;
+    --sidebar-primary-foreground: 17 30% 9%;
+    --sidebar-accent: 18 30% 17%;
+    --sidebar-accent-foreground: 30 25% 88%;
+    --sidebar-border: 18 25% 20%;
+    --sidebar-ring: 29 57% 52%;
+    --success: 152 40% 42%;
+    --success-foreground: 0 0% 98%;
+    --warning: 29 57% 52%;
+    --warning-foreground: 0 0% 98%;
+    --clinical: 220 45% 32%;
+    --clinical-foreground: 30 37% 97%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Playfair nos titulos de pagina: serifada, tom de autoridade.
+     Titulos pequenos de card seguem em DM Sans, para nao pesar a interface. */
+  h1, h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+  }
+  h3, h4 {
+    letter-spacing: -0.01em;
+  }
+
+  /* Keyboard focus ring */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Prevent body scroll when mobile nav visible */
+  @media (max-width: 767px) {
+    .sidebar-open body {
+      overflow: hidden;
+    }
+  }
+}
+
+/* Smooth scrollbar for kanban */
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.2) transparent;
+}
+.overflow-x-auto::-webkit-scrollbar {
+  height: 6px;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 3px;
+}
+
+/* Touch-optimized kanban cards */
+@media (max-width: 767px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .overflow-x-auto > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* Onboarding modal slide animations */
+@keyframes onboardingSlideLeft {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes onboardingSlideRight {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.onboarding-slide-in {
+  animation-duration: 200ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}

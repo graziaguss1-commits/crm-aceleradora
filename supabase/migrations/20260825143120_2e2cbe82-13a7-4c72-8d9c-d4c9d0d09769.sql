@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.log_deal_stage_change() FROM PUBLIC, anon, authenticated;

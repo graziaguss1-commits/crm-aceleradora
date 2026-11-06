@@ -17,6 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TagPicker } from "./TagPicker";
 import { CANAIS, STAGE_PERDIDO, TEMPERATURAS, type Temperatura } from "./constants";
 import type { Stage } from "@/hooks/useLeads";
+import { SeletorSequencia, aplicarSequencia } from "@/components/followups/sequencias";
 
 interface Props {
   open: boolean;
@@ -37,6 +38,7 @@ const EMPTY = {
   indicadoPor: "",
   stageId: "",
   dorRelatada: "",
+  sequenciaId: "none",
 };
 
 const SEM_ANUNCIO = "sem-anuncio";
@@ -92,7 +94,7 @@ export function LeadCreateModal({ open, onOpenChange, stages, pipelineId, onCrea
           .insert(tagIds.map((tag_id) => ({ org_id: orgId, contact_id: contact.id, tag_id })));
       }
 
-      const { error: dErr } = await supabase.from("deals").insert({
+      const { data: novoDeal, error: dErr } = await supabase.from("deals").insert({
         org_id: orgId,
         owner_id: user?.id ?? null,
         contact_id: contact.id,
@@ -103,10 +105,23 @@ export function LeadCreateModal({ open, onOpenChange, stages, pipelineId, onCrea
         value: form.valor ? Number(form.valor) : 0,
         currency: "BRL",
         status: "open",
-      });
+      }).select("id").single();
       if (dErr) throw dErr;
 
-      toast({ title: "Lead criado com sucesso" });
+      // Sequência escolhida no cadastro: agenda os contatos a partir de hoje, 9h
+      let agendados = 0;
+      if (form.sequenciaId !== "none" && novoDeal?.id) {
+        try {
+          agendados = await aplicarSequencia(novoDeal.id, form.sequenciaId, new Date(), "09:00");
+        } catch (err: any) {
+          toast({ title: "Lead criado, mas a sequência não foi agendada", description: err?.message, variant: "destructive" });
+        }
+      }
+
+      toast({
+        title: "Lead criado com sucesso",
+        description: agendados ? `${agendados} ${agendados === 1 ? "contato agendado" : "contatos agendados"} em Follow-ups.` : undefined,
+      });
       setForm({ ...EMPTY });
       setTagIds([]);
       onCreated();
@@ -185,6 +200,12 @@ export function LeadCreateModal({ open, onOpenChange, stages, pipelineId, onCrea
                 Nenhum anúncio cadastrado. Crie a lista em Configurações → Anúncios.
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Sequência de follow-up</Label>
+            <SeletorSequencia valor={form.sequenciaId} onChange={(v) => set({ sequenciaId: v })} />
+            <p className="text-xs text-muted-foreground">Agenda os contatos da sequência a partir de hoje, às 9h, com as mensagens prontas.</p>
           </div>
 
           <div className="space-y-1.5">

@@ -85,6 +85,10 @@ export interface LeadFollowUp {
   realizado_em: string | null;
   resultado: string | null;
   created_at: string;
+  mensagem?: string | null;
+  sequencia_id?: string | null;
+  passo_ordem?: number | null;
+  passo_total?: number | null;
 }
 
 export interface LeadContact {

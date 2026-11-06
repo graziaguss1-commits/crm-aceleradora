@@ -23,6 +23,7 @@ import {
   type FollowUpCanal, type Lead, type Temperatura,
 } from "./constants";
 import { ObjecoesDialog } from "./ObjecoesDialog";
+import { AplicarSequencia } from "@/components/followups/sequencias";
 
 interface Props {
   lead: Lead | null;
@@ -111,6 +112,7 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
     qc.invalidateQueries({ queryKey: ["deal-objecoes", lead?.id] });
     qc.invalidateQueries({ queryKey: ["deal-stage-history", lead?.id] });
     qc.invalidateQueries({ queryKey: ["follow-ups-agenda"] });
+    qc.invalidateQueries({ queryKey: ["follow-ups-semana"] });
     onChanged();
   };
 
@@ -421,9 +423,11 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
 
           {/* FOLLOW-UPS */}
           <TabsContent value="followups" className="space-y-4 pt-4">
+            {lead && <AplicarSequencia dealId={lead.id} onAplicada={refresh} />}
+
             {!showFuForm ? (
               <Button variant="outline" className="w-full gap-2" onClick={() => setShowFuForm(true)}>
-                <Plus className="h-4 w-4" /> Agendar follow-up
+                <Plus className="h-4 w-4" /> Agendar follow-up avulso
               </Button>
             ) : (
               <div className="space-y-3 rounded-lg border p-3">
@@ -476,6 +480,10 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
                         {f.status === "realizado" ? "Realizado" : f.status === "cancelado" ? "Cancelado" : late ? "Atrasado" : "Pendente"}
                       </Badge>
                     </div>
+                    {f.passo_ordem && f.passo_total && (
+                      <p className="eyebrow mt-1 text-[10px]">Sequência · contato {f.passo_ordem} de {f.passo_total}</p>
+                    )}
+                    {f.mensagem && <p className="mt-2 whitespace-pre-line rounded-md bg-muted/50 p-2 text-sm">{f.mensagem}</p>}
                     {f.observacao && <p className="mt-2 text-sm">{f.observacao}</p>}
                     {f.resultado && (
                       <p className="mt-2 rounded-md bg-muted/50 p-2 text-xs">

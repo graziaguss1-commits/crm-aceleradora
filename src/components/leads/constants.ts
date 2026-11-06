@@ -38,34 +38,30 @@ export const TAG_CATEGORIA_LABELS: Record<TagCategoria, string> = {
  *  ja tem campo proprio para isso. */
 export const TAG_CATEGORIAS_DISPONIVEIS: TagCategoria[] = ["interesse", "anuncio", "objecao", "geral"];
 
-/** Funil ensinado na Aceleradora SISA (encontro 3). A ordem vira a posição
- *  das colunas no Pipeline. Lógica que depende de etapa usa as constantes
- *  abaixo, nunca o índice. */
+/** Funil comercial do SISA. A ordem vira a posição das colunas no Pipeline.
+ *  O lead termina em Ganho (vira paciente) ou Perdido (com motivo). Agendamento
+ *  e comparecimento são acompanhados na Agenda, já como paciente. Lógica que
+ *  depende de etapa usa as constantes abaixo, nunca o índice. */
 export const STAGE_NAMES = [
   "Lead novo",
   "Em conversa",
   "Qualificado",
-  "Agendado",
-  "Compareceu",
-  "Não compareceu",
+  "Ganho",
   "Perdido",
 ] as const;
 
 export const DEFAULT_PIPELINE_NAME = "Comercial";
 export const STAGE_PERDIDO = "Perdido";
 
-/** Conversão da secretária = agendamento. Quem chegou a Agendado conta como
- *  convertido mesmo que depois falte; o comparecimento tem taxa própria. */
-export const STAGES_AGENDADOS: readonly string[] = ["Agendado", "Compareceu", "Não compareceu"];
-export const STAGE_COMPARECEU = "Compareceu";
+/** Ganho = lead convertido. Ao entrar nessa etapa o banco cria o paciente
+ *  (trigger converte_lead_ganho_em_paciente). */
+export const STAGE_GANHO = "Ganho";
 
 export const STAGE_BORDER_COLORS = [
   "border-t-sky-500",
   "border-t-indigo-500",
   "border-t-violet-500",
-  "border-t-amber-500",
   "border-t-emerald-500",
-  "border-t-orange-500",
   "border-t-rose-500",
 ];
 

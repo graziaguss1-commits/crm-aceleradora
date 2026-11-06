@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, Users, Calendar, Activity, MoreHorizontal } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, Kanban, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -8,12 +8,15 @@ import { useNavigate } from "react-router-dom";
 
 const mainItems = [
   { title: "Dashboard",  url: "/dashboard",  icon: LayoutDashboard },
+  { title: "Leads",      url: "/pipeline",   icon: Kanban },
   { title: "Pacientes",  url: "/patients",   icon: Users },
   { title: "Agenda",     url: "/agenda",     icon: Calendar },
-  { title: "Atividades", url: "/activities", icon: Activity },
 ];
 
 const moreItems = [
+  { title: "Novo lead",     url: "/pipeline?action=new" },
+  { title: "Follow-ups",    url: "/follow-ups" },
+  { title: "Atividades",    url: "/activities" },
   { title: "Automações",    url: "/automations" },
   { title: "Templates",     url: "/templates" },
   { title: "Relatórios",    url: "/reports" },

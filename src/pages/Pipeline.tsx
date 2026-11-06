@@ -17,7 +17,7 @@ import { LeadFilters, EMPTY_FILTERS, type LeadFilterState } from "@/components/l
 import { LeadCreateModal } from "@/components/leads/LeadCreateModal";
 import { LeadDrawer } from "@/components/leads/LeadDrawer";
 import { ObjecoesDialog } from "@/components/leads/ObjecoesDialog";
-import { STAGE_BORDER_COLORS, STAGE_PERDIDO, formatCurrency, type Lead } from "@/components/leads/constants";
+import { STAGE_BORDER_COLORS, STAGE_GANHO, STAGE_PERDIDO, formatCurrency, type Lead } from "@/components/leads/constants";
 
 function StageColumn({
   id,
@@ -51,6 +51,15 @@ export default function Pipeline() {
   const [pendingLoss, setPendingLoss] = useState<{ lead: Lead; stageId: string } | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Botão "Novo lead" do menu e do cabeçalho chega aqui com ?action=new
+  useEffect(() => {
+    if (searchParams.get("action") === "new") {
+      setCreateOpen(true);
+      searchParams.delete("action");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -121,6 +130,10 @@ export default function Pipeline() {
       toast({ title: "Erro ao mover lead", description: error.message, variant: "destructive" });
       return;
     }
+    // O banco cria o paciente (trigger converte_lead_ganho_em_paciente)
+    if (stages.find((s) => s.id === stageId)?.name === STAGE_GANHO) {
+      toast({ title: "Lead ganho", description: "O cadastro já está em Pacientes, pronto para agendar a consulta." });
+    }
     qc.invalidateQueries({ queryKey: ["leads-board"] });
   };
 
@@ -176,7 +189,7 @@ export default function Pipeline() {
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Novo Lead
+          <Plus className="h-4 w-4" /> Novo lead
         </Button>
       </div>
 

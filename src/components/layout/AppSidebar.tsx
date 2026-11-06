@@ -18,10 +18,11 @@ import {
   Stethoscope,
   TrendingUp,
   Megaphone,
+  UserPlus,
 } from "lucide-react";
 import { HelpCenter } from "@/components/help/HelpCenter";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,28 +38,33 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const generalItems = [
-  { title: "Dashboard",   url: "/dashboard", icon: LayoutDashboard },
-  { title: "Pacientes",   url: "/patients",  icon: Users },
+// Ordem do trabalho da secretária: lead chega, vira conversa, agenda,
+// vira paciente. Resultados e ajustes ficam por último.
+const inicioItems = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+];
+
+const comercialItems = [
+  { title: "Leads",      url: "/pipeline",   icon: Kanban },
+  { title: "Follow-ups", url: "/follow-ups", icon: CalendarClock },
+  { title: "Atividades", url: "/activities", icon: Activity },
+];
+
+const atendimentoItems = [
+  { title: "Pacientes",     url: "/patients",      icon: Users },
+  { title: "Agenda",        url: "/agenda",        icon: Calendar },
   { title: "Profissionais", url: "/professionals", icon: Stethoscope },
-  { title: "Agenda",      url: "/agenda",    icon: Calendar },
 ];
 
-const operationalItems = [
-  { title: "Automações", url: "/automations", icon: Zap },
-  { title: "Pipeline",   url: "/pipeline",    icon: Kanban },
-  { title: "Follow-ups", url: "/follow-ups",  icon: CalendarClock },
-  { title: "Atividades", url: "/activities",  icon: Activity },
-];
-
-const analyticsItems = [
+const resultadosItems = [
   { title: "Dash. comercial", url: "/dashboard-comercial", icon: TrendingUp },
   { title: "Dash. marketing", url: "/dashboard-marketing", icon: Megaphone },
-  { title: "Relatórios", url: "/reports",      icon: BarChart3 },
-  { title: "Metas",      url: "/health-goals", icon: Target },
+  { title: "Relatórios",      url: "/reports",             icon: BarChart3 },
+  { title: "Metas",           url: "/health-goals",        icon: Target },
 ];
 
-const adminItems = [
+const ajustesItems = [
+  { title: "Automações",    url: "/automations",           icon: Zap },
   { title: "Configurações", url: "/settings",              icon: Settings },
   { title: "Integrações",   url: "/settings/integrations", icon: Plug },
   { title: "Segurança",     url: "/settings/security",     icon: Shield },
@@ -69,6 +75,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { profile, signOut } = useAuth();
+  const navigate = useNavigate();
   
   const [helpOpen, setHelpOpen] = useState(false);
   
@@ -77,7 +84,7 @@ export function AppSidebar() {
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  const renderNavGroup = (items: typeof generalItems, label?: string) => (
+  const renderNavGroup = (items: typeof inicioItems, label?: string) => (
     <SidebarGroup>
       <SidebarGroupContent>
         {label && !collapsed && (
@@ -113,10 +120,21 @@ export function AppSidebar() {
           </div>
         </SidebarHeader>
         <SidebarContent>
-          {renderNavGroup(generalItems, "Geral")}
-          {renderNavGroup(operationalItems, "Operacional")}
-          {renderNavGroup(analyticsItems, "Analytics")}
-          {renderNavGroup(adminItems, "Admin")}
+          <div className="px-3 pt-1">
+            <button
+              onClick={() => navigate("/pipeline?action=new")}
+              title="Novo lead"
+              className={`flex w-full items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 ${collapsed ? "h-8 px-0" : "h-9 px-3"}`}
+            >
+              <UserPlus className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Novo lead</span>}
+            </button>
+          </div>
+          {renderNavGroup(inicioItems)}
+          {renderNavGroup(comercialItems, "Comercial")}
+          {renderNavGroup(atendimentoItems, "Atendimento")}
+          {renderNavGroup(resultadosItems, "Resultados")}
+          {renderNavGroup(ajustesItems, "Ajustes")}
         </SidebarContent>
         <SidebarFooter className="border-t border-border p-3 space-y-2">
           <button

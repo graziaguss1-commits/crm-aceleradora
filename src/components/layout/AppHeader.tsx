@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Search, Plus, Users, Stethoscope, Calendar, ClipboardList } from "lucide-react";
+import { Search, Plus, Users, Stethoscope, Calendar, ClipboardList, UserPlus } from "lucide-react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { NotificationBell } from "@/components/crm/NotificationBell";
 import { AIInsightsPanel } from "@/components/crm/AIInsightsPanel";
@@ -19,6 +19,10 @@ const routeLabels: Record<string, string> = {
   "/agenda": "Agenda",
   "/records": "Prontuários",
   "/health-goals": "Metas",
+  "/pipeline": "Leads",
+  "/follow-ups": "Follow-ups",
+  "/dashboard-comercial": "Dash. comercial",
+  "/dashboard-marketing": "Dash. marketing",
   "/activities": "Atividades",
   "/tasks": "Tarefas",
   "/reports": "Relatórios",
@@ -40,6 +44,7 @@ export function AppHeader({ onOpenSearch, actions }: AppHeaderProps) {
   const navigate = useNavigate();
 
   const quickActions = [
+    { label: "Novo Lead", icon: UserPlus, path: "/pipeline?action=new" },
     { label: "Novo Paciente", icon: Users, path: "/patients?action=new" },
     { label: "Novo Profissional", icon: Stethoscope, path: "/professionals?action=new" },
     { label: "Nova Consulta", icon: Calendar, path: "/agenda?action=new" },

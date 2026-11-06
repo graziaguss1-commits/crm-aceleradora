@@ -12,7 +12,7 @@ const OBJECOES_INICIAIS = [
 ];
 
 // Mesma ordem de STAGE_NAMES
-const STAGE_PROBABILITIES = [10, 20, 40, 70, 100, 30, 0];
+const STAGE_PROBABILITIES = [10, 30, 60, 100, 0];
 
 /**
  * Garante a configuração inicial do CRM de leads (idempotente):

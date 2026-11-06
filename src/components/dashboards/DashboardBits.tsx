@@ -79,7 +79,7 @@ export function BarList({
                   </span>
                   <span className="shrink-0 tabular-nums text-muted-foreground">
                     {item.total}
-                    {mostrarConversao && <> · {formatarTaxa(taxa(item.convertidos, item.total))} agendou</>}
+                    {mostrarConversao && <> · {formatarTaxa(taxa(item.convertidos, item.total))} conv.</>}
                   </span>
                 </div>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-muted">

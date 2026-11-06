@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarClock, Check, Plus, Trash2, ArrowRight, History } from "lucide-react";
 import { TagPicker } from "./TagPicker";
 import {
-  CANAIS, FOLLOWUP_CANAIS, STAGE_PERDIDO, TEMPERATURAS, formatCurrency, isOverdue, leadName,
+  CANAIS, FOLLOWUP_CANAIS, STAGE_GANHO, STAGE_PERDIDO, TEMPERATURAS, formatCurrency, isOverdue, leadName,
   type FollowUpCanal, type Lead, type Temperatura,
 } from "./constants";
 import { ObjecoesDialog } from "./ObjecoesDialog";
@@ -182,7 +182,12 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
         setLossObjecoes([]);
       }
 
-      toast({ title: "Lead atualizado" });
+      const virouGanho = stageName(form.stage_id) === STAGE_GANHO && stageName(lead.stage_id) !== STAGE_GANHO;
+      toast(
+        virouGanho
+          ? { title: "Lead ganho", description: "O cadastro já está em Pacientes, pronto para agendar a consulta." }
+          : { title: "Lead atualizado" },
+      );
       refresh();
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err?.message, variant: "destructive" });

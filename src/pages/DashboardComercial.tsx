@@ -1,11 +1,15 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrg } from "@/hooks/useOrg";
 import { BarList, FiltroPeriodo, MetricCard } from "@/components/dashboards/DashboardBits";
-import { STAGES_AGENDADOS, STAGE_COMPARECEU, TEMPERATURA_LABELS } from "@/components/leads/constants";
+import { TEMPERATURA_LABELS } from "@/components/leads/constants";
 import {
   ehConvertido,
   filtrarLeads,
   formatarTaxa,
+  intervaloDoPeriodo,
   porTemperatura,
   rankingIndicadores,
   rankingObjecoes,
@@ -19,25 +23,41 @@ export default function DashboardComercial() {
   const [periodo, setPeriodo] = useState<PeriodoValue>("30");
   const [custom, setCustom] = useState<PeriodoCustom>({ de: "", ate: "" });
   const { isLoading, error, leads, stageById, objecoesPorDeal, nomesDeContatos } = useCrmMetrics();
+  const { orgId } = useOrg();
+
+  // Comparecimento vem da Agenda: consultas do período marcadas como
+  // compareceu (attended) ou faltou (no_show). Consulta ainda não resolvida
+  // (scheduled/confirmed) ou cancelada não entra na conta.
+  const { de, ate } = intervaloDoPeriodo(periodo, custom);
+  const consultas = useQuery({
+    queryKey: ["comparecimento", orgId, de?.toISOString() ?? null, ate?.toISOString() ?? null],
+    enabled: !!orgId,
+    staleTime: 60 * 1000,
+    queryFn: async () => {
+      let q = (supabase as any)
+        .from("activities")
+        .select("appointment_status")
+        .eq("org_id", orgId)
+        .in("appointment_status", ["attended", "no_show"]);
+      if (de) q = q.gte("due_date", de.toISOString());
+      if (ate) q = q.lte("due_date", ate.toISOString());
+      const { data, error: err } = await q;
+      if (err) throw err;
+      const lista = (data ?? []) as { appointment_status: string }[];
+      return {
+        compareceram: lista.filter((c) => c.appointment_status === "attended").length,
+        resolvidas: lista.length,
+      };
+    },
+  });
 
   const m = useMemo(() => {
     const filtrados = filtrarLeads(leads, { periodo, custom });
     const convertidos = filtrados.filter((l) => ehConvertido(l, stageById)).length;
-    // Comparecimento só conta consulta que já aconteceu ou já falhou:
-    // quem está em "Agendado" ainda não teve a data.
-    const etapa = (l: (typeof filtrados)[number]) => (l.stage_id ? stageById.get(l.stage_id)?.name : undefined);
-    const compareceram = filtrados.filter((l) => etapa(l) === STAGE_COMPARECEU).length;
-    const resolvidos = filtrados.filter((l) => {
-      const nome = etapa(l);
-      return !!nome && STAGES_AGENDADOS.includes(nome) && nome !== "Agendado";
-    }).length;
     return {
       novos: filtrados.length,
       convertidos,
       conversao: taxa(convertidos, filtrados.length),
-      compareceram,
-      resolvidos,
-      comparecimento: taxa(compareceram, resolvidos),
       temperaturas: porTemperatura(filtrados, stageById),
       objecoes: rankingObjecoes(filtrados, objecoesPorDeal),
       indicadores: rankingIndicadores(filtrados, stageById, nomesDeContatos),
@@ -66,7 +86,7 @@ export default function DashboardComercial() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard comercial</h1>
           <p className="text-sm text-muted-foreground">
-            Agendamentos, comparecimento, temperatura da base, objeções e quem mais indica.
+            Conversão, comparecimento na agenda, temperatura da base, objeções e quem mais indica.
           </p>
         </div>
         <FiltroPeriodo
@@ -79,17 +99,21 @@ export default function DashboardComercial() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Novos leads" value={m.novos} />
-        <MetricCard label="Agendados" value={m.convertidos} tone="positivo" />
+        <MetricCard label="Ganhos" value={m.convertidos} tone="positivo" />
         <MetricCard
-          label="Taxa de agendamento"
+          label="Taxa de conversão"
           value={formatarTaxa(m.conversao)}
-          hint={`${m.convertidos} de ${m.novos} leads agendaram`}
+          hint={`${m.convertidos} de ${m.novos} leads viraram pacientes`}
           tone="positivo"
         />
         <MetricCard
           label="Taxa de comparecimento"
-          value={formatarTaxa(m.comparecimento)}
-          hint={m.resolvidos ? `${m.compareceram} de ${m.resolvidos} consultas já realizadas ou perdidas` : "Nenhuma consulta realizada ainda"}
+          value={formatarTaxa(taxa(consultas.data?.compareceram ?? 0, consultas.data?.resolvidas ?? 0))}
+          hint={
+            consultas.data?.resolvidas
+              ? `${consultas.data.compareceram} de ${consultas.data.resolvidas} consultas da agenda`
+              : "Nenhuma consulta marcada como compareceu ou faltou no período"
+          }
           tone="positivo"
         />
       </section>
@@ -100,7 +124,7 @@ export default function DashboardComercial() {
             key={t.temperatura}
             label={`Leads ${TEMPERATURA_LABELS[t.temperatura].toLowerCase()}s`}
             value={t.total}
-            hint={`${formatarTaxa(t.participacao)} da base · agenda ${formatarTaxa(t.conversao)}`}
+            hint={`${formatarTaxa(t.participacao)} da base · converte ${formatarTaxa(t.conversao)}`}
             tone={t.temperatura}
           />
         ))}

@@ -15,7 +15,7 @@ const routeLabels: Record<string, string> = {
   "/": "Dashboard",
   "/dashboard": "Dashboard",
   "/patients": "Pacientes",
-  "/professionals": "Médicos",
+  "/professionals": "Profissionais",
   "/agenda": "Agenda",
   "/records": "Prontuários",
   "/health-goals": "Metas",
@@ -46,7 +46,7 @@ export function AppHeader({ onOpenSearch, actions }: AppHeaderProps) {
     { label: "Nova Atividade", icon: ClipboardList, path: "/activities?action=new" },
   ];
 
-  const parts: { label: string; href?: string }[] = [{ label: "CRM Saúde", href: "/dashboard" }];
+  const parts: { label: string; href?: string }[] = [{ label: "SISA", href: "/dashboard" }];
 
   if (location.pathname.startsWith("/settings/")) {
     parts.push({ label: "Configurações", href: "/settings" });

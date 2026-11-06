@@ -159,9 +159,9 @@ export default function Patients() {
             </SelectContent>
           </Select>
           <Select value={ownerFilter} onValueChange={(v) => { setOwnerFilter(v); setPage(0); }}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Médico" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Profissional" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os médicos</SelectItem>
+              <SelectItem value="all">Todos os profissionais</SelectItem>
               {owners.map((o) => (
                 <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
               ))}

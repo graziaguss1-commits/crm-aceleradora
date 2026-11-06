@@ -59,7 +59,7 @@ export function AICopilotStep({ orgId, setCanContinue, setStepData }: Onboarding
       <div>
         <h3 className="text-xl font-bold">Ative a IA Clínica</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          O CRM Saúde usa Claude da Anthropic para gerar resumos SOAP de prontuários,
+          O SISA usa Claude da Anthropic para gerar resumos SOAP de prontuários,
           sugerir condutas e estruturar a documentação clínica.
         </p>
       </div>

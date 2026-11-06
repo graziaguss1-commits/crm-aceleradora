@@ -15,7 +15,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 const pages = [
   { label: "Dashboard",     icon: LayoutDashboard, path: "/dashboard" },
   { label: "Pacientes",     icon: Users,           path: "/patients" },
-  { label: "Médicos",       icon: Stethoscope,     path: "/professionals" },
+  { label: "Profissionais",       icon: Stethoscope,     path: "/professionals" },
   { label: "Agenda",        icon: Calendar,        path: "/agenda" },
   { label: "Atividades",    icon: Activity,        path: "/activities" },
   { label: "Automações",    icon: Zap,             path: "/automations" },
@@ -97,7 +97,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         )}
 
         {professionals.length > 0 && (
-          <CommandGroup heading="Médicos">
+          <CommandGroup heading="Profissionais">
             {professionals.map((pr) => (
               <CommandItem key={pr.id} onSelect={() => handleSelect(`/professionals`)} className="gap-2">
                 <Stethoscope className="h-4 w-4 text-muted-foreground" />

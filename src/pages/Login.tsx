@@ -101,8 +101,8 @@ export default function Login() {
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
             <Handshake className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">CRM Saúde</h1>
-          <p className="text-sm text-muted-foreground">Gerencie seus relacionamentos com inteligência</p>
+          <h1 className="text-2xl font-bold tracking-tight">SISA</h1>
+          <p className="text-sm text-muted-foreground">O comercial da sua clínica, do primeiro contato à consulta</p>
         </div>
 
         <Card className="border-border">

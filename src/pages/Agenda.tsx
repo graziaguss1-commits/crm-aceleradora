@@ -319,9 +319,9 @@ export default function Agenda() {
           </Select>
 
           <Select value={professionalFilter} onValueChange={setProfessionalFilter}>
-            <SelectTrigger className="w-[190px]"><SelectValue placeholder="Médico" /></SelectTrigger>
+            <SelectTrigger className="w-[190px]"><SelectValue placeholder="Profissional" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os médicos</SelectItem>
+              <SelectItem value="all">Todos os profissionais</SelectItem>
               {professionals.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
             </SelectContent>
           </Select>
@@ -393,7 +393,7 @@ export default function Agenda() {
                 )}
                 {detalhe.professional?.name && (
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Médico</p>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Profissional</p>
                     <p>{detalhe.professional.name}</p>
                   </div>
                 )}

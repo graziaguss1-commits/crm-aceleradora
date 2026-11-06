@@ -30,7 +30,7 @@ const FollowUps = lazy(() => import("./pages/FollowUps"));
 const DashboardComercial = lazy(() => import("./pages/DashboardComercial"));
 const DashboardMarketing = lazy(() => import("./pages/DashboardMarketing"));
 
-// CRM Saúde
+// SISA
 const Patients = lazy(() => import("./pages/Patients"));
 const Agenda = lazy(() => import("./pages/Agenda"));
 const Records = lazy(() => import("./pages/Records"));

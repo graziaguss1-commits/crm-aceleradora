@@ -147,7 +147,7 @@ export function BloqueioCreateModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Médico</Label>
+            <Label>Profissional</Label>
             <Select value={professionalId} onValueChange={setProfessionalId}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

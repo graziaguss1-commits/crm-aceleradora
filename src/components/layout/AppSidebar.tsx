@@ -40,7 +40,7 @@ import {
 const generalItems = [
   { title: "Dashboard",   url: "/dashboard", icon: LayoutDashboard },
   { title: "Pacientes",   url: "/patients",  icon: Users },
-  { title: "Médicos", url: "/professionals", icon: Stethoscope },
+  { title: "Profissionais", url: "/professionals", icon: Stethoscope },
   { title: "Agenda",      url: "/agenda",    icon: Calendar },
 ];
 
@@ -109,7 +109,7 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Stethoscope className="h-4 w-4 text-primary-foreground" />
             </div>
-            {!collapsed && <span className="text-lg font-semibold tracking-tight">CRM Saúde</span>}
+            {!collapsed && <span className="text-lg font-semibold tracking-tight">SISA</span>}
           </div>
         </SidebarHeader>
         <SidebarContent>

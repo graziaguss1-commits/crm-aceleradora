@@ -107,7 +107,7 @@ export function AnunciosSection() {
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") void criar(); }}
-              placeholder='Ex: "Tenho interesse no tratamento da menopausa"'
+              placeholder='Ex: "Quero agendar uma avaliação"'
             />
           </div>
           <div className="space-y-1.5">

@@ -85,7 +85,7 @@ export function DemoDataSection({ orgId, userId }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-            <Stat label="Médicos" value={4} />
+            <Stat label="Profissionais" value={4} />
             <Stat label="Pacientes" value={10} />
             <Stat label="Consultas" value={24} />
             <Stat label="Prontuários" value={10} />
@@ -115,7 +115,7 @@ export function DemoDataSection({ orgId, userId }: Props) {
           {counts && (
             <div className="text-sm text-muted-foreground">
               Atualmente: <strong className="text-foreground">{total}</strong> registros de demonstração na sua conta
-              {total > 0 && ` (${counts.professionals} médicos, ${counts.patients} pacientes, ${counts.activities} atividades, ${counts.medical_records} prontuários, ${counts.payments} pagamentos, ${counts.health_goals} metas, ${counts.contacts} contatos, ${counts.companies} empresas, ${counts.deals} negócios, ${counts.tags} tags)`}.
+              {total > 0 && ` (${counts.professionals} profissionais, ${counts.patients} pacientes, ${counts.activities} atividades, ${counts.medical_records} prontuários, ${counts.payments} pagamentos, ${counts.health_goals} metas, ${counts.contacts} contatos, ${counts.companies} empresas, ${counts.deals} negócios, ${counts.tags} tags)`}.
             </div>
           )}
           <AlertDialog>

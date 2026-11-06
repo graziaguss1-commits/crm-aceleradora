@@ -186,9 +186,9 @@ export default function Records() {
             />
           </div>
           <Select value={profFilter} onValueChange={setProfFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Médico" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Profissional" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os médicos</SelectItem>
+              <SelectItem value="all">Todos os profissionais</SelectItem>
               {professionals.map((p) => (<SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>))}
             </SelectContent>
           </Select>

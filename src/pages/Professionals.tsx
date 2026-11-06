@@ -108,7 +108,7 @@ export default function Professionals() {
         setRows((curr) => curr.map((p) => ({ ...p, patients_count: map[p.id] ?? 0 })));
       }
     } catch (err: any) {
-      toast({ title: "Erro ao carregar médicos", description: err?.message ?? String(err), variant: "destructive" });
+      toast({ title: "Erro ao carregar profissionais", description: err?.message ?? String(err), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -141,7 +141,7 @@ export default function Professionals() {
       toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Médico cadastrado" });
+    toast({ title: "Profissional cadastrado" });
     setCreateOpen(false);
     setForm(emptyForm);
     void fetchAll();
@@ -152,11 +152,11 @@ export default function Professionals() {
     <div className="space-y-4 p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Médicos</h1>
-          <p className="text-sm text-muted-foreground">Cadastro dos médicos da clínica com consultas, prontuários e financeiro.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Profissionais</h1>
+          <p className="text-sm text-muted-foreground">Cadastro dos profissionais da clínica com consultas, prontuários e financeiro.</p>
         </div>
         <Button onClick={() => { setForm(emptyForm); setCreateOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Novo médico
+          <Plus className="mr-2 h-4 w-4" /> Novo profissional
         </Button>
       </div>
 
@@ -197,9 +197,9 @@ export default function Professionals() {
         ) : rows.length === 0 ? (
           <EmptyState
             icon={<Stethoscope className="h-7 w-7 text-muted-foreground" />}
-            title="Nenhum médico cadastrado"
-            description="Cadastre o primeiro médico para vincular a pacientes e consultas."
-            actionLabel="Cadastrar primeiro médico"
+            title="Nenhum profissional cadastrado"
+            description="Cadastre o primeiro profissional para vincular a pacientes e consultas."
+            actionLabel="Cadastrar primeiro profissional"
             onAction={() => setCreateOpen(true)}
           />
         ) : (
@@ -207,7 +207,7 @@ export default function Professionals() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Médico</TableHead>
+                  <TableHead>Profissional</TableHead>
                   <TableHead>Especialidade</TableHead>
                   <TableHead>Registro</TableHead>
                   <TableHead>Telefone</TableHead>
@@ -251,7 +251,7 @@ export default function Professionals() {
             </Table>
             <div className="flex items-center justify-between border-t p-3 text-sm">
               <span className="text-muted-foreground">
-                {total} médico{total === 1 ? "" : "s"} · página {page + 1} de {totalPages}
+                {total} {total === 1 ? "profissional" : "profissionais"} · página {page + 1} de {totalPages}
               </span>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
@@ -269,7 +269,7 @@ export default function Professionals() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo médico</DialogTitle>
+            <DialogTitle>Novo profissional</DialogTitle>
           </DialogHeader>
           <div className="grid gap-3">
             <div>
@@ -279,7 +279,7 @@ export default function Professionals() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Especialidade</Label>
-                <Input value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} placeholder="Nutrologia" />
+                <Input value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} placeholder="Ex: Dermatologia, Odontologia, Fisioterapia" />
               </div>
               <div>
                 <Label>Conselho</Label>
@@ -303,7 +303,7 @@ export default function Professionals() {
             <div className="flex items-center justify-between rounded-md border p-3">
               <div>
                 <p className="text-sm font-medium">Ativo</p>
-                <p className="text-xs text-muted-foreground">Médicos inativos não aparecem ao agendar.</p>
+                <p className="text-xs text-muted-foreground">Profissionais inativos não aparecem ao agendar.</p>
               </div>
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
             </div>

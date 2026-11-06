@@ -19,11 +19,10 @@ export function WelcomeStep({ userName, onNext }: OnboardingStepProps) {
 
       <div className="space-y-2">
         <h2 className="text-2xl font-bold tracking-tight">
-          Bem-vindo ao CRM Saúde, {firstName}! 👋
+          Bem-vindo ao SISA, {firstName}! 👋
         </h2>
         <p className="text-muted-foreground max-w-md mx-auto">
-          Vamos configurar a sua clínica em menos de 5 minutos: você elimina o papel,
-          automatiza confirmações e ganha um prontuário com IA. Pode pular qualquer integração e voltar nela em Configurações.
+          Vamos configurar a sua clínica em poucos minutos. Pode pular qualquer integração e voltar nela em Configurações.
         </p>
       </div>
 

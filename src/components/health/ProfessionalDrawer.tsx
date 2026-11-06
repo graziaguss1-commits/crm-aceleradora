@@ -127,7 +127,7 @@ export function ProfessionalDrawer({ professionalId, open, onOpenChange, onUpdat
           }
         }
       } catch (err: any) {
-        toast({ title: "Erro ao carregar médico", description: err?.message ?? String(err), variant: "destructive" });
+        toast({ title: "Erro ao carregar profissional", description: err?.message ?? String(err), variant: "destructive" });
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -157,7 +157,7 @@ export function ProfessionalDrawer({ professionalId, open, onOpenChange, onUpdat
         })
         .eq("id", professional.id);
       if (error) throw error;
-      toast({ title: "Médico atualizado" });
+      toast({ title: "Profissional atualizado" });
       onUpdated?.();
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err?.message ?? String(err), variant: "destructive" });
@@ -205,7 +205,7 @@ export function ProfessionalDrawer({ professionalId, open, onOpenChange, onUpdat
         {loading ? (
           <div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>
         ) : !professional ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">Médico não encontrado.</div>
+          <div className="py-10 text-center text-sm text-muted-foreground">Profissional não encontrado.</div>
         ) : (
           <Tabs defaultValue="dados" className="mt-4">
             <TabsList className="grid w-full grid-cols-5">
@@ -249,7 +249,7 @@ export function ProfessionalDrawer({ professionalId, open, onOpenChange, onUpdat
                 <div className="col-span-2 flex items-center justify-between rounded-md border p-3">
                   <div>
                     <p className="text-sm font-medium">Ativo</p>
-                    <p className="text-xs text-muted-foreground">Médicos inativos não aparecem ao agendar.</p>
+                    <p className="text-xs text-muted-foreground">Profissionais inativos não aparecem ao agendar.</p>
                   </div>
                   <Switch checked={professional.is_active} onCheckedChange={(v) => updateField("is_active", v)} />
                 </div>
@@ -327,7 +327,7 @@ export function ProfessionalDrawer({ professionalId, open, onOpenChange, onUpdat
                 </div>
               </div>
               {payments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum pagamento vinculado às consultas deste médico.</p>
+                <p className="text-sm text-muted-foreground">Nenhum pagamento vinculado às consultas deste profissional.</p>
               ) : (
                 payments.map((p) => (
                   <div key={p.id} className="flex items-center justify-between rounded-md border p-3 text-sm">

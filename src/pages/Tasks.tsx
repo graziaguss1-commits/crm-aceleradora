@@ -63,6 +63,7 @@ export default function Tasks() {
 
   const [tasks, setTasks] = useState<Activity[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [patients, setPatients] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [members, setMembers] = useState<Profile[]>([]);
   const [dateFilter, setDateFilter] = useState<DateFilter>("todo");
@@ -81,14 +82,16 @@ export default function Tasks() {
 
   const fetchData = useCallback(async () => {
     if (!orgId) return;
-    const [tRes, cRes, dRes, mRes] = await Promise.all([
+    const [tRes, cRes, pRes, dRes, mRes] = await Promise.all([
       (supabase as any).from("activities").select("*").eq("org_id", orgId).eq("type", "task").order("due_date", { ascending: true, nullsFirst: false }),
       (supabase as any).from("contacts").select("*").eq("org_id", orgId),
+      (supabase as any).from("patients").select("id, first_name, last_name").eq("org_id", orgId).order("first_name"),
       (supabase as any).from("deals").select("*").eq("org_id", orgId),
       (supabase as any).from("profiles").select("*").eq("org_id", orgId),
     ]);
     setTasks(tRes.data || []);
     setContacts(cRes.data || []);
+    setPatients(pRes.data || []);
     setDeals(dRes.data || []);
     setMembers(mRes.data || []);
   }, [orgId]);
@@ -109,6 +112,9 @@ export default function Tasks() {
 
   const getContact = (id: string | null) => id ? contacts.find((c) => c.id === id) : null;
   const getDeal = (id: string | null) => id ? deals.find((d) => d.id === id) : null;
+  // activities.contact_id aponta para patients; o lead aparece pelo negócio
+  const getPerson = (t: Activity) =>
+    (t.contact_id ? patients.find((p) => p.id === t.contact_id) : null) || getContact(getDeal(t.deal_id)?.contact_id ?? null);
   const getMember = (id: string | null) => id ? members.find((m) => m.id === id) : null;
 
   const isOverdue = (t: Activity) => !t.completed_at && t.due_date && new Date(t.due_date) < new Date();
@@ -129,7 +135,7 @@ export default function Tasks() {
       // Search
       if (search) {
         const q = search.toLowerCase();
-        const contact = getContact(t.contact_id);
+        const contact = getPerson(t);
         const deal = getDeal(t.deal_id);
         const haystack = `${t.title} ${contact?.first_name || ""} ${contact?.last_name || ""} ${deal?.title || ""}`.toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -153,7 +159,7 @@ export default function Tasks() {
       }
       return true;
     });
-  }, [tasks, dateFilter, ownerFilter, search, user, contacts, deals]);
+  }, [tasks, dateFilter, ownerFilter, search, user, contacts, patients, deals]);
 
   const counts = useMemo(() => {
     const now = new Date();
@@ -210,15 +216,17 @@ export default function Tasks() {
       contact_id: formContactId !== "none" ? formContactId : null,
       deal_id: formDealId !== "none" ? formDealId : null,
       user_id: formUserId || user?.id || null,
+      ...(editTask ? {} : { created_by: user?.id ?? null }),
     };
 
-    if (editTask) {
-      await (supabase as any).from("activities").update(payload).eq("id", editTask.id);
-      toast({ title: "Tarefa atualizada" });
-    } else {
-      await (supabase as any).from("activities").insert(payload);
-      toast({ title: "Tarefa criada" });
+    const { error } = editTask
+      ? await (supabase as any).from("activities").update(payload).eq("id", editTask.id)
+      : await (supabase as any).from("activities").insert(payload);
+    if (error) {
+      toast({ title: "Não foi possível salvar a tarefa", description: error.message, variant: "destructive" });
+      return;
     }
+    toast({ title: editTask ? "Tarefa atualizada" : "Tarefa criada" });
     setCreateOpen(false);
     fetchData();
   };
@@ -314,7 +322,7 @@ export default function Tasks() {
           </TableHeader>
           <TableBody>
             {filtered.map((t) => {
-              const contact = getContact(t.contact_id);
+              const contact = getPerson(t);
               const deal = getDeal(t.deal_id);
               const member = getMember(t.user_id);
               const overdue = isOverdue(t);
@@ -432,19 +440,19 @@ export default function Tasks() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Contato</Label>
+                <Label className="text-xs">Paciente</Label>
                 <Select value={formContactId} onValueChange={setFormContactId}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Nenhum</SelectItem>
-                    {contacts.map((c) => (
+                    {patients.map((c) => (
                       <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name || ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs">Negócio</Label>
+                <Label className="text-xs">Negócio (lead)</Label>
                 <Select value={formDealId} onValueChange={setFormDealId}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>

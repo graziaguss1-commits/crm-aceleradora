@@ -23,6 +23,7 @@ export type Database = {
           contact_id: string | null
           created_at: string
           created_by: string | null
+          deal_id: string | null
           due_date: string | null
           duration_minutes: number | null
           id: string
@@ -33,6 +34,7 @@ export type Database = {
           title: string
           type: string
           updated_at: string
+          user_id: string | null
           whatsapp_reminder_sent: boolean
         }
         Insert: {
@@ -43,6 +45,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_id?: string | null
           due_date?: string | null
           duration_minutes?: number | null
           id?: string
@@ -53,6 +56,7 @@ export type Database = {
           title: string
           type?: string
           updated_at?: string
+          user_id?: string | null
           whatsapp_reminder_sent?: boolean
         }
         Update: {
@@ -63,6 +67,7 @@ export type Database = {
           contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          deal_id?: string | null
           due_date?: string | null
           duration_minutes?: number | null
           id?: string
@@ -73,6 +78,7 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string
+          user_id?: string | null
           whatsapp_reminder_sent?: boolean
         }
         Relationships: [

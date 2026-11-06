@@ -32,15 +32,15 @@ import type { Database } from "@/integrations/supabase/types";
 type Activity = any;
 type ActivityType = string;
 type Contact = any;
-type Company = any;
+type Patient = any;
 type Deal = any;
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 const typeIcons: Record<ActivityType, React.ComponentType<{ className?: string }>> = {
-  call: Phone, email: Mail, meeting: Calendar, note: FileText, task: CheckSquare, visit: Calendar, whatsapp: Mail, appointment: Stethoscope,
+  call: Phone, email: Mail, meeting: Calendar, note: FileText, task: CheckSquare, whatsapp: Mail, appointment: Stethoscope,
 };
 const typeLabels: Record<ActivityType, string> = {
-  call: "Ligação", email: "Email", meeting: "Reunião", note: "Nota", task: "Tarefa", visit: "Visita", whatsapp: "WhatsApp", appointment: "Consulta",
+  call: "Ligação", email: "Email", meeting: "Reunião", note: "Nota", task: "Tarefa", whatsapp: "WhatsApp", appointment: "Consulta",
 };
 const typeColors: Record<ActivityType, string> = {
   call: "text-emerald-600",
@@ -48,7 +48,6 @@ const typeColors: Record<ActivityType, string> = {
   meeting: "text-amber-600",
   note: "text-muted-foreground",
   task: "text-violet-600",
-  visit: "text-amber-600",
   whatsapp: "text-emerald-600",
   appointment: "text-sky-600",
 };
@@ -85,10 +84,9 @@ export default function Activities() {
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [members, setMembers] = useState<Profile[]>([]);
-  const [imoveis, setImoveis] = useState<Array<{ id: string; titulo: string; bairro: string | null; cidade: string | null }>>([]);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<DateFilter>("todo");
   const [ownerFilter, setOwnerFilter] = useState<string>("all");
@@ -114,20 +112,18 @@ export default function Activities() {
 
   const fetchData = useCallback(async () => {
     if (!orgId) return;
-    const [aRes, cRes, coRes, dRes, mRes, iRes] = await Promise.all([
+    const [aRes, cRes, pRes, dRes, mRes] = await Promise.all([
       (supabase as any).from("activities").select("*").eq("org_id", orgId).order("due_date", { ascending: true, nullsFirst: false }),
       (supabase as any).from("contacts").select("*").eq("org_id", orgId),
-      (supabase as any).from("companies").select("*").eq("org_id", orgId),
+      (supabase as any).from("patients").select("id, first_name, last_name, email, phone").eq("org_id", orgId).order("first_name"),
       (supabase as any).from("deals").select("*").eq("org_id", orgId),
       (supabase as any).from("profiles").select("*").eq("org_id", orgId),
-      (supabase as any).from("imoveis").select("id, titulo, bairro, cidade").eq("org_id", orgId).order("titulo"),
     ]);
     setActivities(aRes.data || []);
     setContacts(cRes.data || []);
-    setCompanies(coRes.data || []);
+    setPatients(pRes.data || []);
     setDeals(dRes.data || []);
     setMembers(mRes.data || []);
-    setImoveis(iRes.data || []);
   }, [orgId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -145,7 +141,9 @@ export default function Activities() {
   };
 
   const getContact = (id: string | null) => id ? contacts.find((c) => c.id === id) : null;
-  const getCompany = (id: string | null) => id ? companies.find((c) => c.id === id) : null;
+  const getPatient = (id: string | null) => id ? patients.find((p) => p.id === id) : null;
+  // A pessoa da atividade: o paciente vinculado ou, se não houver, o lead do negócio
+  const getPerson = (a: Activity) => getPatient(a.contact_id) || getContact(getDeal(a.deal_id)?.contact_id ?? null);
   const getDeal = (id: string | null) => id ? deals.find((d) => d.id === id) : null;
   const getMember = (id: string | null) => id ? members.find((m) => m.id === id) : null;
 
@@ -170,7 +168,7 @@ export default function Activities() {
       // Search
       if (search) {
         const q = search.toLowerCase();
-        const contact = getContact(a.contact_id);
+        const contact = getPerson(a);
         const deal = getDeal(a.deal_id);
         const haystack = `${a.title} ${contact?.first_name || ""} ${contact?.last_name || ""} ${contact?.email || ""} ${deal?.title || ""}`.toLowerCase();
         if (!haystack.includes(q)) return false;
@@ -194,7 +192,7 @@ export default function Activities() {
       }
       return true;
     });
-  }, [activities, typeFilter, dateFilter, ownerFilter, search, contacts, deals]);
+  }, [activities, typeFilter, dateFilter, ownerFilter, search, contacts, patients, deals]);
 
   // Count per date filter (for badges)
   const counts = useMemo(() => {
@@ -367,10 +365,9 @@ export default function Activities() {
                 <TableHead className="w-10"></TableHead>
                 <TableHead className="min-w-[200px]">Assunto</TableHead>
                 <TableHead>Negócio</TableHead>
-                <TableHead>Pessoa de contato</TableHead>
+                <TableHead>Lead / paciente</TableHead>
                 <TableHead>E-mail</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Organização</TableHead>
                 <TableHead>Data de venc.</TableHead>
                 <TableHead>Atribuído a</TableHead>
                 <TableHead className="w-10"></TableHead>
@@ -379,9 +376,8 @@ export default function Activities() {
             <TableBody>
               {filtered.map((a) => {
                 const Icon = typeIcons[a.type] ?? FileText;
-                const contact = getContact(a.contact_id);
+                const contact = getPerson(a);
                 const deal = getDeal(a.deal_id);
-                const company = getCompany(a.company_id) || (contact?.company_id ? getCompany(contact.company_id) : null);
                 const member = getMember(a.user_id);
                 const overdue = isOverdue(a);
 
@@ -428,11 +424,6 @@ export default function Activities() {
                     <TableCell>
                       {contact?.phone && (
                         <span className="text-xs text-muted-foreground">{contact.phone}</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {company && (
-                        <span className="text-xs text-muted-foreground">{company.name}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -539,10 +530,9 @@ export default function Activities() {
         onOpenChange={(o) => { if (!o) { setCreateOpen(false); setEditActivity(null); } }}
         activity={editActivity}
         contacts={contacts}
-        companies={companies}
+        patients={patients}
         deals={deals}
         members={members}
-        imoveis={imoveis}
         onSaved={fetchData}
       />
     </div>
@@ -555,22 +545,13 @@ interface ModalProps {
   onOpenChange: (o: boolean) => void;
   activity: Activity | null;
   contacts: Contact[];
-  companies: Company[];
+  patients: Patient[];
   deals: Deal[];
   members: Profile[];
-  imoveis: Array<{ id: string; titulo: string; bairro: string | null; cidade: string | null }>;
   onSaved: () => void;
 }
 
-const visitaStatusOptions = [
-  { value: "agendada", label: "Agendada" },
-  { value: "realizada", label: "Realizada" },
-  { value: "reagendada", label: "Reagendada" },
-  { value: "desmarcada", label: "Desmarcada" },
-  { value: "nao_compareceu", label: "Não compareceu" },
-];
-
-function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, companies, deals, members, imoveis, onSaved }: ModalProps) {
+function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, patients, deals, members, onSaved }: ModalProps) {
   const { orgId } = useOrg();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -581,19 +562,14 @@ function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, compa
   const [body, setBody] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [dealId, setDealId] = useState<string>("none");
-  const [contactId, setContactId] = useState<string>("none");
+  const [patientId, setPatientId] = useState<string>("none");
   const [assignee, setAssignee] = useState<string>("none");
-  const [imovelId, setImovelId] = useState<string>("none");
-  const [visitaStatus, setVisitaStatus] = useState<string>("agendada");
-  const [visitaFeedback, setVisitaFeedback] = useState("");
+  const [saving, setSaving] = useState(false);
 
+  // O lead entra pelo negócio: activities.contact_id aponta para patients,
+  // então o lead do negócio é só exibido, nunca gravado em contact_id.
   const selectedDeal = deals.find((d) => d.id === dealId);
-  const resolvedContactId = dealId !== "none" && selectedDeal?.contact_id
-    ? selectedDeal.contact_id
-    : contactId !== "none" ? contactId : null;
-  const selectedContact = contacts.find((c) => c.id === resolvedContactId);
-  const resolvedCompanyId = selectedDeal?.company_id || selectedContact?.company_id || null;
-  const resolvedCompany = companies.find((c) => c.id === resolvedCompanyId);
+  const dealLead = selectedDeal?.contact_id ? contacts.find((c) => c.id === selectedDeal.contact_id) : null;
 
   useEffect(() => {
     if (activity) {
@@ -602,82 +578,57 @@ function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, compa
       setBody(activity.body || "");
       setDueDate(activity.due_date ? activity.due_date.slice(0, 16) : "");
       setDealId(activity.deal_id || "none");
-      setContactId(activity.contact_id || "none");
+      setPatientId(activity.contact_id || "none");
       setAssignee(activity.user_id || "none");
-      setImovelId(activity.imovel_id || (selectedDeal?.imovel_id ?? "none"));
-      setVisitaStatus(activity.visita_status || "agendada");
-      setVisitaFeedback(activity.visita_feedback || "");
     } else {
       setType("task");
       setTitle("");
       setBody("");
       setDueDate("");
       setDealId("none");
-      setContactId("none");
+      setPatientId("none");
       setAssignee("none");
-      setImovelId("none");
-      setVisitaStatus("agendada");
-      setVisitaFeedback("");
     }
   }, [activity, open]);
 
-  const handleDealChange = (val: string) => {
-    setDealId(val);
-    if (val !== "none") {
-      const deal = deals.find((d) => d.id === val);
-      if (deal?.contact_id) setContactId(deal.contact_id);
-      if (deal?.imovel_id && imovelId === "none") setImovelId(deal.imovel_id);
-    }
-  };
-
   const handleSave = async () => {
     if (!orgId || !title.trim()) return;
-    if ((type === "meeting" || type === "visit") && !dueDate) {
-      toast({ title: "Data/hora obrigatória", description: `Informe a data e hora da ${type === "visit" ? "visita" : "reunião"}.`, variant: "destructive" });
+    if (type === "meeting" && !dueDate) {
+      toast({ title: "Data/hora obrigatória", description: "Informe a data e hora da reunião.", variant: "destructive" });
       return;
     }
-    if (type === "visit" && imovelId === "none") {
-      toast({ title: "Imóvel obrigatório", description: "Selecione o imóvel da visita.", variant: "destructive" });
-      return;
-    }
-    const payload = {
+    const payload: Record<string, unknown> = {
       org_id: orgId,
       type,
       title: title.trim(),
       body: body || null,
-      due_date: dueDate || null,
+      due_date: dueDate ? new Date(dueDate).toISOString() : null,
       deal_id: dealId !== "none" ? dealId : null,
-      contact_id: resolvedContactId,
-      company_id: resolvedCompanyId,
-      user_id: assignee !== "none" ? assignee : user?.id,
-      imovel_id: type === "visit" && imovelId !== "none" ? imovelId : null,
-      visita_status: type === "visit" ? visitaStatus : null,
-      visita_feedback: type === "visit" && visitaStatus === "realizada" ? (visitaFeedback || null) : null,
+      contact_id: patientId !== "none" ? patientId : null,
+      user_id: assignee !== "none" ? assignee : user?.id ?? null,
     };
+    if (!isEdit) payload.created_by = user?.id ?? null;
 
+    setSaving(true);
     const { error } = isEdit
       ? await (supabase as any).from("activities").update(payload).eq("id", activity!.id)
       : await (supabase as any).from("activities").insert(payload);
+    setSaving(false);
 
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (error) { toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); return; }
     onOpenChange(false);
     onSaved();
     toast({ title: isEdit ? "Atividade atualizada" : "Atividade criada" });
   };
 
   const typeHints: Record<ActivityType, string> = {
-    note: "Registre observações sobre contatos, negócios ou empresas",
+    note: "Registre observações sobre o lead, o paciente ou o negócio",
     task: "Crie uma tarefa com prazo e responsável",
-    meeting: "Agende uma reunião com data, horário e participantes",
-    call: "Registre uma ligação com contato e resultado",
+    meeting: "Agende uma reunião com data e horário",
+    call: "Registre uma ligação e o resultado",
     email: "Crie um rascunho de email para acompanhamento",
-    visit: "Agende uma visita ao imóvel. Atualize o status conforme acontece.",
     whatsapp: "Registre uma conversa pelo WhatsApp",
   };
-
-  const availableContacts = dealId !== "none" && selectedDeal?.company_id
-    ? contacts.filter((c) => c.company_id === selectedDeal.company_id || !c.company_id)
-    : contacts;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -688,7 +639,7 @@ function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, compa
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="flex gap-1 rounded-lg border border-border bg-muted/50 p-1 flex-wrap">
-            {(["task", "note", "call", "meeting", "visit", "email"] as ActivityType[]).map((t) => {
+            {(["task", "note", "call", "whatsapp", "meeting", "email"] as ActivityType[]).map((t) => {
               const Icon = typeIcons[t] ?? FileText;
               return (
                 <button
@@ -705,124 +656,70 @@ function ActivityCreateEditModal({ open, onOpenChange, activity, contacts, compa
 
           <div className="space-y-1">
             <Label className="text-xs">
-              {type === "note" ? "Assunto" : type === "call" ? "Resumo da ligação" : type === "visit" ? "Título da visita" : "Título"} *
+              {type === "note" ? "Assunto" : type === "call" ? "Resumo da ligação" : "Título"} *
             </Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={
-              type === "note" ? "Assunto da nota..." : type === "call" ? "Resumo da ligação..." : type === "meeting" ? "Nome da reunião..." : type === "email" ? "Assunto do email..." : type === "visit" ? "Ex.: Visita com cliente João" : "Título da tarefa..."
+              type === "note" ? "Assunto da nota..." : type === "call" ? "Resumo da ligação..." : type === "meeting" ? "Nome da reunião..." : type === "email" ? "Assunto do email..." : type === "whatsapp" ? "Resumo da conversa..." : "Título da tarefa..."
             } />
           </div>
 
           <div className="space-y-1">
             <Label className="text-xs">
-              {type === "note" ? "Conteúdo" : type === "call" ? "Notas da ligação" : type === "meeting" ? "Pauta / Notas" : type === "email" ? "Corpo do email" : type === "visit" ? "Observações" : "Descrição"}
+              {type === "note" ? "Conteúdo" : type === "call" ? "Notas da ligação" : type === "meeting" ? "Pauta / Notas" : type === "email" ? "Corpo do email" : "Descrição"}
             </Label>
             <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={type === "note" || type === "email" ? 6 : 3} />
           </div>
 
-          {(type === "task" || type === "meeting" || type === "call" || type === "visit") && (
+          {(type === "task" || type === "meeting" || type === "call" || type === "whatsapp") && (
             <div className="space-y-1">
               <Label className="text-xs">
-                {type === "meeting" ? "Data/hora" : type === "call" ? "Data/hora da ligação" : type === "visit" ? "Data/hora da visita" : "Prazo"}
-                {(type === "meeting" || type === "visit") && " *"}
+                {type === "meeting" ? "Data/hora" : type === "call" ? "Data/hora da ligação" : type === "whatsapp" ? "Data/hora da conversa" : "Prazo"}
+                {type === "meeting" && " *"}
               </Label>
-              <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required={type === "meeting" || type === "visit"} />
+              <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required={type === "meeting"} />
             </div>
           )}
 
-          {type === "visit" && (
-            <>
-              <div className="space-y-1">
-                <Label className="text-xs">Imóvel *</Label>
-                <Select value={imovelId} onValueChange={setImovelId}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione o imóvel" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Selecione...</SelectItem>
-                    {imoveis.map((i) => (
-                      <SelectItem key={i.id} value={i.id}>
-                        {i.titulo}{i.bairro ? ` — ${i.bairro}` : ""}{i.cidade ? `, ${i.cidade}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Status da visita</Label>
-                <Select value={visitaStatus} onValueChange={setVisitaStatus}>
-                  <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {visitaStatusOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {visitaStatus === "realizada" && (
-                <div className="space-y-1">
-                  <Label className="text-xs">Feedback da visita</Label>
-                  <Textarea value={visitaFeedback} onChange={(e) => setVisitaFeedback(e.target.value)} rows={3} placeholder="Impressões do cliente, próximos passos..." />
-                </div>
-              )}
-            </>
-          )}
-
-
           <div className="space-y-1">
-            <Label className="text-xs">Negócio</Label>
-            <Select value={dealId} onValueChange={handleDealChange}>
+            <Label className="text-xs">Negócio (lead no pipeline)</Label>
+            <Select value={dealId} onValueChange={setDealId}>
               <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Nenhum</SelectItem>
                 {deals.map((d) => <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>)}
               </SelectContent>
             </Select>
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs">Contato</Label>
-            <Select
-              value={resolvedContactId || "none"}
-              onValueChange={(v) => setContactId(v)}
-              disabled={dealId !== "none" && !!selectedDeal?.contact_id}
-            >
-              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhum</SelectItem>
-                {availableContacts.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {dealId !== "none" && selectedDeal?.contact_id && (
-              <p className="text-[10px] text-muted-foreground">Preenchido automaticamente pelo negócio</p>
+            {dealLead && (
+              <p className="text-[10px] text-muted-foreground">Lead: {dealLead.first_name} {dealLead.last_name || ""}</p>
             )}
           </div>
 
-          {resolvedCompany && (
-            <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">Empresa (vinculada automaticamente)</Label>
-              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                🏢 {resolvedCompany.name}
-              </div>
-            </div>
-          )}
+          <div className="space-y-1">
+            <Label className="text-xs">Paciente</Label>
+            <Select value={patientId} onValueChange={setPatientId}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                {patients.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.first_name} {p.last_name || ""}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-          {(type === "task" || type === "meeting") && (
-            <div className="space-y-1">
-              <Label className="text-xs">Responsável</Label>
-              <Select value={assignee} onValueChange={setAssignee}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Eu</SelectItem>
-                  {members.map((m) => <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <div className="space-y-1">
+            <Label className="text-xs">Responsável</Label>
+            <Select value={assignee} onValueChange={setAssignee}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Eu</SelectItem>
+                {members.filter((m) => m.id !== user?.id).map((m) => <SelectItem key={m.id} value={m.id}>{m.name || m.email}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
 
-          <Button onClick={handleSave} className="w-full" disabled={!title.trim()}>
-            {isEdit ? "Salvar Alterações" : "Criar Atividade"}
+          <Button onClick={handleSave} className="w-full" disabled={!title.trim() || saving}>
+            {saving ? "Salvando..." : isEdit ? "Salvar Alterações" : "Criar Atividade"}
           </Button>
         </div>
       </DialogContent>

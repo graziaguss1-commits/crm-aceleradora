@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,10 @@
     /* Paleta da marca
        Marrom mogno #5C3D2E · Cobre #B87333 · Azul marinho #1B2C4E
        Marrom escuro #3A2218 · Off-white #FAF7F4 · Bege #EDE4DA · Quase-preto #1E1410 */
-    --background: 30 37% 97%;
+    /* Linguagem visual do NutroClinic (bento grid editorial) com a paleta SISA:
+       creme no fundo, cards brancos, marrom café no bloco de destaque, cobre
+       nos detalhes. */
+    --background: 30 30% 95%;
     --foreground: 18 41% 16%;
     --card: 0 0% 100%;
     --card-foreground: 18 41% 16%;
@@ -28,7 +31,7 @@
     --border: 32 35% 89%;
     --input: 32 35% 89%;
     --ring: 29 57% 46%;
-    --radius: 0.5rem;
+    --radius: 1.25rem;
     --sidebar-background: 30 30% 95%;
     --sidebar-foreground: 20 25% 28%;
     --sidebar-primary: 20 33% 27%;
@@ -44,6 +47,9 @@
     /* Azul marinho: reservado para o contexto clínico */
     --clinical: 220 49% 21%;
     --clinical-foreground: 30 37% 97%;
+    /* Bloco de destaque (abertura do Dashboard): marrom café */
+    --hero: 18 41% 16%;
+    --hero-foreground: 30 37% 97%;
   }
 
   .dark {
@@ -80,6 +86,8 @@
     --warning-foreground: 0 0% 98%;
     --clinical: 220 45% 32%;
     --clinical-foreground: 30 37% 97%;
+    --hero: 18 41% 13%;
+    --hero-foreground: 30 30% 94%;
   }
 }
 
@@ -89,21 +97,17 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Geist', system-ui, sans-serif;
+    font-feature-settings: "cv11", "ss01";
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  /* Playfair nos titulos de pagina: serifada, tom de autoridade.
-     Titulos pequenos de card seguem em DM Sans, para nao pesar a interface. */
-  h1, h2 {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-weight: 600;
-    letter-spacing: -0.4px;
-    line-height: 1.1;
-  }
-  h3, h4 {
-    letter-spacing: -0.01em;
+  /* Titulos em Geist bold com tracking negativo, como no NutroClinic */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Geist', system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.03em;
   }
 
   /* Keyboard focus ring */
@@ -116,6 +120,23 @@
     .sidebar-open body {
       overflow: hidden;
     }
+  }
+}
+
+@layer utilities {
+  /* Rótulo editorial: mono, caixa alta, letras espaçadas */
+  .eyebrow {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: hsl(var(--muted-foreground));
+  }
+  /* Sombra dos cards: suave, em tom de marrom */
+  .shadow-card {
+    box-shadow: 0 1px 2px hsl(18 41% 16% / 0.05), 0 10px 30px hsl(18 41% 16% / 0.05);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 1px 2px hsl(18 41% 16% / 0.06), 0 14px 36px hsl(18 41% 16% / 0.08);
   }
 }
 

@@ -28,7 +28,7 @@ export function MobileBottomNav() {
   const navigate = useNavigate();
 
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-14 items-center justify-around border-t border-border bg-background/95 backdrop-blur-sm md:hidden" role="navigation" aria-label="Navegação principal mobile">

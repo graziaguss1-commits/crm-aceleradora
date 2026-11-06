@@ -15,12 +15,14 @@ import type { Temperatura } from "@/components/leads/constants";
 
 type Tone = "default" | "positivo" | Temperatura;
 
-const TONE_CLASSES: Record<Tone, string> = {
-  default: "text-foreground",
-  positivo: "text-emerald-600 dark:text-emerald-400",
-  quente: "text-destructive",
-  morno: "text-amber-600 dark:text-amber-400",
-  frio: "text-sky-600 dark:text-sky-400",
+// Número sempre na cor do texto (como no NutroClinic); o tom aparece no
+// ponto ao lado do rótulo.
+const TONE_DOT: Record<Tone, string> = {
+  default: "bg-muted-foreground/40",
+  positivo: "bg-success",
+  quente: "bg-destructive",
+  morno: "bg-accent",
+  frio: "bg-sky-500",
 };
 
 export function MetricCard({
@@ -35,11 +37,14 @@ export function MetricCard({
   tone?: Tone;
 }) {
   return (
-    <Card>
-      <CardContent className="p-5">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-        <p className={`mt-2 text-3xl font-semibold tabular-nums ${TONE_CLASSES[tone]}`}>{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    <Card className="transition-shadow hover:shadow-card-hover">
+      <CardContent className="flex flex-col gap-2 p-6">
+        <span className="eyebrow flex items-center gap-2 text-[11px]">
+          <span className={`h-2 w-2 shrink-0 rounded-full ${TONE_DOT[tone]}`} />
+          {label}
+        </span>
+        <p className="text-3xl font-bold leading-tight tracking-[-0.02em] tabular-nums">{value}</p>
+        {hint && <p className="text-sm text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );

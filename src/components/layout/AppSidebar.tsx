@@ -81,14 +81,15 @@ export function AppSidebar() {
   
   
 
+  // Igualdade ou subrota: "/dashboard" não pode acender em "/dashboard-comercial"
   const isActive = (path: string) =>
-    path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   const renderNavGroup = (items: typeof inicioItems, label?: string) => (
     <SidebarGroup>
       <SidebarGroupContent>
         {label && !collapsed && (
-          <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="eyebrow px-3 pb-1.5 pt-2 text-[10px]">
             {label}
           </p>
         )}
@@ -96,7 +97,7 @@ export function AppSidebar() {
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                <NavLink to={item.url} end={item.url === "/dashboard"} className="hover:bg-accent/50" activeClassName="bg-accent text-accent-foreground font-medium">
+                <NavLink to={item.url} end className="rounded-xl hover:bg-sidebar-accent" activeClassName="!bg-primary !text-primary-foreground font-medium">
                   <item.icon className="h-4 w-4" />
                   {!collapsed && <span>{item.title}</span>}
                 </NavLink>

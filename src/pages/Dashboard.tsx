@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/hooks/useOrg";
+import { useAuth } from "@/contexts/AuthContext";
 import { DIAS_SEM_RETORNO_PADRAO, getDiasSemRetorno } from "@/lib/orgSettings";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip,
   PieChart, Pie, Cell, LineChart, Line, Legend, CartesianGrid,
 } from "recharts";
-import { Calendar, CheckCircle2, AlertTriangle, DollarSign, ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import {
   APPOINTMENT_STATUS_LABELS, APPOINTMENT_STATUS_BADGE, AppointmentStatus, BRL, fullName,
 } from "@/components/health/types";
@@ -47,7 +48,9 @@ const STATUS_COLORS: Record<AppointmentStatus, string> = {
 
 export default function Dashboard() {
   const { orgId } = useOrg();
+  const { profile } = useAuth();
   const { toast } = useToast();
+  const [followUpsAtrasados, setFollowUpsAtrasados] = useState(0);
   const [loading, setLoading] = useState(true);
   const [todayAppointments, setTodayAppointments] = useState<AppointmentLite[]>([]);
   const [monthAppointments, setMonthAppointments] = useState<AppointmentLite[]>([]);
@@ -85,7 +88,7 @@ export default function Dashboard() {
       setDiasSemRetorno(dias);
       const limiteSemRetorno = new Date(now); limiteSemRetorno.setDate(now.getDate() - dias);
 
-      const [todayRes, monthRes, paymentsRes, pendingRes, attendedRes] = await Promise.all([
+      const [todayRes, monthRes, paymentsRes, pendingRes, attendedRes, fuRes] = await Promise.all([
         (supabase as any)
           .from("activities")
           .select("id,title,due_date,appointment_status,duration_minutes,contact_id")
@@ -122,7 +125,15 @@ export default function Dashboard() {
           .eq("appointment_status", "attended")
           .order("due_date", { ascending: false })
           .limit(500),
+        // Follow-ups de lead com data passada e ainda pendentes
+        (supabase as any)
+          .from("follow_ups")
+          .select("id", { count: "exact", head: true })
+          .eq("org_id", orgId)
+          .eq("status", "pendente")
+          .lt("data_agendada", now.toISOString()),
       ]);
+      setFollowUpsAtrasados(fuRes.count ?? 0);
 
       const today = (todayRes.data ?? []) as AppointmentLite[];
       const month = (monthRes.data ?? []) as AppointmentLite[];
@@ -274,43 +285,92 @@ export default function Dashboard() {
     return Array.from(map.entries()).map(([day, value]) => ({ day, value }));
   }, [payments]);
 
-  return (
-    <div className="space-y-4 p-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Visão consolidada da clínica.</p>
-      </div>
+  const agora = new Date();
+  const hora = agora.getHours();
+  const saudacao = hora < 12 ? "Bom dia." : hora < 18 ? "Boa tarde." : "Boa noite.";
+  const primeiroNome = (profile?.name ?? "").trim().split(/\s+/)[0] ?? "";
+  const dataDeHoje = agora.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })
+    + " · " + agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Consultas hoje</p>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="mt-1 text-2xl font-semibold">{kpis.todayCount}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Confirmadas hoje</p>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="mt-1 text-2xl font-semibold">{kpis.confirmedToday}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Taxa de no-show (mês)</p>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="mt-1 text-2xl font-semibold">{kpis.noShowPct}%</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Receita do mês</p>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <p className="mt-1 text-2xl font-semibold">{BRL.format(kpis.revenue)}</p>
-        </Card>
-      </div>
+  // Ponto de status: cobre = atenção, verde = em dia, vermelho = problema
+  const cartoesAcao = [
+    {
+      rotulo: "Follow-ups atrasados",
+      valor: followUpsAtrasados,
+      desc: followUpsAtrasados === 1 ? "lead esperando retorno com data vencida" : "leads esperando retorno com data vencida",
+      ponto: followUpsAtrasados > 0 ? "bg-destructive" : "bg-success",
+      acao: "Ver follow-ups",
+      link: "/follow-ups",
+    },
+    {
+      rotulo: "Consultas hoje",
+      valor: kpis.todayCount,
+      desc: "na agenda do dia, contando as já realizadas",
+      ponto: "bg-accent",
+      acao: "Ver agenda",
+      link: "/agenda",
+    },
+    {
+      rotulo: "Confirmadas hoje",
+      valor: kpis.confirmedToday,
+      desc: kpis.todayCount > kpis.confirmedToday ? `${kpis.todayCount - kpis.confirmedToday} ainda sem confirmação` : "todas as consultas do dia confirmadas",
+      ponto: kpis.todayCount > kpis.confirmedToday ? "bg-accent" : "bg-success",
+      acao: "Confirmar na agenda",
+      link: "/agenda",
+    },
+    {
+      rotulo: "No-show no mês",
+      valor: `${kpis.noShowPct}%`,
+      desc: "das consultas do mês em que o paciente faltou",
+      ponto: kpis.noShowPct > 10 ? "bg-destructive" : "bg-success",
+      acao: "Ver relatórios",
+      link: "/reports",
+    },
+    {
+      rotulo: "Receita do mês",
+      valor: BRL.format(kpis.revenue),
+      desc: "em pagamentos recebidos neste mês",
+      ponto: "bg-success",
+      acao: "Ver relatórios",
+      link: "/reports",
+    },
+  ];
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Abertura em marrom café, no padrão editorial do NutroClinic */}
+      <section className="rounded-[1.375rem] bg-hero text-hero-foreground px-7 py-6 flex flex-col gap-1.5">
+        <p className="eyebrow text-[11px] !text-hero-foreground/70">{dataDeHoje}</p>
+        <p className="text-base text-hero-foreground/85 mt-2">{primeiroNome ? `${primeiroNome},` : "\u00a0"}</p>
+        <h1 className="text-3xl font-bold leading-tight tracking-[-0.03em]">{saudacao}</h1>
+        <p className="text-sm text-hero-foreground/75">O que precisa da sua atenção hoje está logo abaixo.</p>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <p className="eyebrow text-[11px]">Hoje na clínica</p>
+          <h2 className="text-xl font-bold mt-0.5">O que pede ação</h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {cartoesAcao.map((c) => (
+            <article key={c.rotulo} className="rounded-[1.375rem] border bg-card shadow-card p-6 flex flex-col gap-2 transition-shadow hover:shadow-card-hover">
+              <span className="eyebrow text-[11px] flex items-center gap-2">
+                <span className={`h-2 w-2 rounded-full ${c.ponto}`} />
+                {c.rotulo}
+              </span>
+              <p className="text-3xl font-bold tracking-[-0.02em] leading-tight tabular-nums">{c.valor}</p>
+              <p className="text-sm text-muted-foreground flex-1">{c.desc}</p>
+              {c.link ? (
+                <Link to={c.link} className="border-t border-border pt-3 text-sm font-medium hover:underline">
+                  {c.acao} →
+                </Link>
+              ) : (
+                <span className="border-t border-border pt-3 text-sm text-muted-foreground">{c.acao}</span>
+              )}
+            </article>
+          ))}
+        </div>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <Card className="p-4">

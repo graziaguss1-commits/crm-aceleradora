@@ -193,10 +193,10 @@ export function LeadCreateModal({ open, onOpenChange, stages, pipelineId, onCrea
               rows={3}
               value={form.dorRelatada}
               onChange={(e) => set({ dorRelatada: e.target.value })}
-              placeholder="O que a pessoa falou, com as palavras dela. Ex: acorda cansada, ganhou 8kg no último ano, já tentou de tudo"
+              placeholder="O que a pessoa falou, com as palavras dela. Ex: está com dor há meses e já tentou outros tratamentos"
             />
             <p className="text-xs text-muted-foreground">
-              Use na hora do retorno e do fechamento — é o que ela veio resolver.
+              Use na hora do retorno e do fechamento. É o motivo que trouxe a pessoa até a clínica.
             </p>
           </div>
 

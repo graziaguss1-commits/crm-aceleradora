@@ -20,10 +20,12 @@ import {
   Megaphone,
   UserPlus,
   ClipboardList,
+  Building2,
 } from "lucide-react";
 import { HelpCenter } from "@/components/help/HelpCenter";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useClinicaAcesso } from "@/hooks/useClinicaAcesso";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -78,6 +80,7 @@ export function AppSidebar() {
   const location = useLocation();
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const acesso = useClinicaAcesso();
   
   const [helpOpen, setHelpOpen] = useState(false);
   
@@ -138,6 +141,8 @@ export function AppSidebar() {
           {renderNavGroup(atendimentoItems, "Atendimento")}
           {renderNavGroup(resultadosItems, "Resultados")}
           {renderNavGroup(ajustesItems, "Ajustes")}
+          {/* Só a administração do SISA vê */}
+          {acesso.data?.admin && renderNavGroup([{ title: "Clínicas", url: "/admin/clinicas", icon: Building2 }], "Administração")}
         </SidebarContent>
         <SidebarFooter className="border-t border-border p-3 space-y-2">
           <button

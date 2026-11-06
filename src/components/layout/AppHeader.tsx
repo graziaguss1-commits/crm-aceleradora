@@ -24,6 +24,7 @@ const routeLabels: Record<string, string> = {
   "/dashboard-comercial": "Dash. comercial",
   "/dashboard-marketing": "Dash. marketing",
   "/relatorio-quinzenal": "Relatório quinzenal",
+  "/admin/clinicas": "Clínicas",
   "/activities": "Atividades",
   "/tasks": "Tarefas",
   "/reports": "Relatórios",

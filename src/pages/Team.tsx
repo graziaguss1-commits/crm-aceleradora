@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Database } from "@/integrations/supabase/types";
+import { ConviteLink, criarConviteEquipe } from "@/components/crm/ConviteLink";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
@@ -52,6 +53,7 @@ export default function Team() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [inviting, setInviting] = useState(false);
+  const [ultimoConvite, setUltimoConvite] = useState<{ email: string; link: string } | null>(null);
 
   // RBAC permissions
   const [permissions, setPermissions] = useState<any[]>([]);
@@ -128,17 +130,12 @@ export default function Team() {
     if (!orgId || !inviteEmail) return;
     setInviting(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await supabase.functions.invoke("invite-member", {
-        body: { email: inviteEmail, role: inviteRole, org_id: orgId },
-      });
-      if (res.error || res.data?.error) {
-        toast({ title: "Erro ao convidar", description: res.data?.error || res.error?.message, variant: "destructive" });
-      } else {
-        toast({ title: "Convite enviado!", description: `Magic link enviado para ${inviteEmail}` });
-        setInviteEmail("");
-        fetchAll();
-      }
+      // Cadastro no SISA é só por convite: gera o link para enviar à pessoa
+      const link = await criarConviteEquipe(orgId, inviteEmail, inviteRole, user?.id ?? null);
+      setUltimoConvite({ email: inviteEmail.trim().toLowerCase(), link });
+      toast({ title: "Convite criado", description: "Copie o link e envie para a pessoa." });
+      setInviteEmail("");
+      fetchAll();
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -288,9 +285,9 @@ export default function Team() {
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  Convidar via Magic Link
+                  Convidar para a equipe
                 </CardTitle>
-                <CardDescription className="text-xs">O convidado receberá um link de acesso por email</CardDescription>
+                <CardDescription className="text-xs">Gera um link de acesso para enviar à pessoa pelo WhatsApp</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex gap-2">
@@ -313,9 +310,10 @@ export default function Team() {
                   </Select>
                   <Button size="sm" className="h-9" onClick={sendInvite} disabled={inviting || !inviteEmail}>
                     <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                    {inviting ? "Enviando..." : "Convidar"}
+                    {inviting ? "Gerando..." : "Gerar convite"}
                   </Button>
                 </div>
+                {ultimoConvite && <ConviteLink email={ultimoConvite.email} link={ultimoConvite.link} />}
               </CardContent>
             </Card>
           )}

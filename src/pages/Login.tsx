@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,22 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Cadastro só por convite: o link traz ?convite=<token>
+  const conviteToken = searchParams.get("convite");
+  const [convite, setConvite] = useState<null | { email: string; clinica: string; valido: boolean }>(null);
+  const [conviteCarregando, setConviteCarregando] = useState(!!conviteToken);
+
+  useEffect(() => {
+    if (!conviteToken) return;
+    (async () => {
+      const { data } = await (supabase as any).rpc("convite_info", { p_token: conviteToken });
+      setConvite(data ?? null);
+      if (data?.email) setEmail(data.email);
+      setConviteCarregando(false);
+    })();
+  }, [conviteToken]);
 
   useEffect(() => {
     if (user) navigate("/dashboard");
@@ -45,12 +61,16 @@ export default function Login() {
         email,
         password,
         options: {
-          data: { full_name: name },
+          data: { full_name: name, convite: conviteToken },
           emailRedirectTo: window.location.origin,
         },
       });
       if (error) {
-        toast({ title: "Erro ao criar conta", description: error.message, variant: "destructive" });
+        // O banco recusa cadastro sem convite válido para este e-mail
+        const msg = /database error|convite/i.test(error.message)
+          ? "Este convite não vale para este e-mail ou já foi usado. Peça um novo link à administração do SISA."
+          : error.message;
+        toast({ title: "Não foi possível criar o acesso", description: msg, variant: "destructive" });
       } else if (data.session) {
         toast({ title: "Conta criada com sucesso!" });
         navigate("/dashboard");
@@ -68,10 +88,11 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin },
+      // Link só para quem já tem acesso; quem não tem precisa de convite
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: false },
     });
     if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Não foi possível enviar o link", description: "Confira o e-mail. O acesso ao SISA é liberado por convite.", variant: "destructive" });
     } else {
       setMagicLinkSent(true);
       toast({ title: "Link enviado!", description: "Verifique seu email." });
@@ -105,13 +126,64 @@ export default function Login() {
           <p className="text-sm text-muted-foreground">O comercial da sua clínica, do primeiro contato à consulta</p>
         </div>
 
+        {conviteToken ? (
+          <Card className="border-border">
+            <CardHeader className="pb-2">
+              <p className="eyebrow text-[11px]">Convite de acesso</p>
+              <CardTitle>
+                {conviteCarregando ? "Carregando convite..." : convite?.valido ? convite.clinica : "Convite indisponível"}
+              </CardTitle>
+              <CardDescription>
+                {conviteCarregando
+                  ? "\u00a0"
+                  : convite?.valido
+                    ? "Crie sua senha para entrar no SISA da sua clínica."
+                    : "Este link já foi usado, expirou ou a clínica está inativa. Peça um novo convite. Se você já criou seu acesso, entre pela tela de login."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {convite?.valido ? (
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Nome</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-name" placeholder="Seu nome" className="pl-9" value={name} onChange={(e) => setName(e.target.value)} required />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">E-mail</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-email" type="email" className="pl-9" value={email} readOnly />
+                    </div>
+                    <p className="text-xs text-muted-foreground">O convite vale só para este e-mail.</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Senha</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-password" type="password" placeholder="Mínimo 6 caracteres" className="pl-9" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Criando acesso..." : "Criar meu acesso"}
+                  </Button>
+                </form>
+              ) : (
+                !conviteCarregando && (
+                  <Button variant="outline" className="w-full" onClick={() => navigate("/")}>Ir para o login</Button>
+                )
+              )}
+            </CardContent>
+          </Card>
+        ) : (
         <Card className="border-border">
           <Tabs defaultValue="login">
             <CardHeader className="pb-4">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Entrar</TabsTrigger>
-                <TabsTrigger value="signup">Cadastrar</TabsTrigger>
-                <TabsTrigger value="magic">Magic Link</TabsTrigger>
+                <TabsTrigger value="magic">Link por e-mail</TabsTrigger>
               </TabsList>
             </CardHeader>
 
@@ -161,66 +233,13 @@ export default function Login() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="signup" className="mt-0 space-y-4">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-name"
-                        placeholder="Seu nome"
-                        className="pl-9"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="seu@email.com"
-                        className="pl-9"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Senha</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        className="pl-9"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Criando conta..." : "Criar conta"}
-                  </Button>
-                </form>
-              </TabsContent>
-
               <TabsContent value="magic" className="mt-0 space-y-4">
                 {magicLinkSent ? (
                   <div className="py-8 text-center">
                     <Mail className="mx-auto mb-4 h-12 w-12 text-primary" />
                     <CardTitle className="mb-2">Verifique seu email</CardTitle>
                     <CardDescription>
-                      Enviamos um link mágico para <strong>{email}</strong>
+                      Enviamos um link de acesso para <strong>{email}</strong>
                     </CardDescription>
                   </div>
                 ) : (
@@ -241,7 +260,7 @@ export default function Login() {
                       </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Enviando..." : "Enviar magic link"}
+                      {loading ? "Enviando..." : "Enviar link de acesso"}
                     </Button>
                   </form>
                 )}
@@ -249,6 +268,12 @@ export default function Login() {
             </CardContent>
           </Tabs>
         </Card>
+        )}
+        {!conviteToken && (
+          <p className="text-center text-xs text-muted-foreground">
+            O acesso ao SISA é liberado por convite da sua clínica.
+          </p>
+        )}
       </div>
     </div>
   );

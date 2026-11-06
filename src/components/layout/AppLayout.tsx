@@ -11,10 +11,13 @@ import { OnboardingChecklist } from "@/components/crm/OnboardingChecklist";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useClinicaAcesso } from "@/hooks/useClinicaAcesso";
+import { Button } from "@/components/ui/button";
 
 export function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
+  const acesso = useClinicaAcesso();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -44,6 +47,26 @@ export function AppLayout() {
   }
 
   if (!user) return null;
+
+  // Clínica desativada ou usuário removido da clínica: o banco já bloqueia os
+  // dados; aqui só explicamos o motivo em vez de mostrar telas vazias.
+  const sit = acesso.data?.situacao;
+  if (sit && (!sit.tem_clinica || !sit.ativa) && !acesso.data?.admin) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-6">
+        <div className="w-full max-w-md rounded-[1.375rem] border bg-card p-8 text-center shadow-card">
+          <p className="eyebrow text-[11px]">SISA</p>
+          <h1 className="mt-1 text-2xl font-bold">Acesso suspenso</h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {sit.tem_clinica
+              ? `O acesso da ${sit.nome ?? "sua clínica"} ao SISA está suspenso no momento. Fale com a administração do SISA para reativar.`
+              : "Sua conta não está ligada a nenhuma clínica. Peça um novo convite ao responsável pela sua clínica."}
+          </p>
+          <Button variant="outline" className="mt-6 w-full" onClick={() => signOut()}>Sair</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <SidebarProvider>

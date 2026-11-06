@@ -33,6 +33,7 @@ import { OnboardingSection } from "@/components/settings/OnboardingSection";
 import { DemoDataSection } from "@/components/settings/DemoDataSection";
 import { PermissionsAuditTab } from "@/components/settings/PermissionsAuditTab";
 import type { Database } from "@/integrations/supabase/types";
+import { ConviteLink, criarConviteEquipe } from "@/components/crm/ConviteLink";
 
 type PipelineStage = Database["public"]["Tables"]["pipeline_stages"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -655,14 +656,18 @@ function MembersTab({ orgId, userId }: { orgId: string | null; userId?: string }
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const [ultimoConvite, setUltimoConvite] = useState<{ email: string; link: string } | null>(null);
+
   const sendInvite = async () => {
     if (!orgId || !inviteEmail) return;
-    const { error } = await (supabase as any).from("invitations").insert({
-      org_id: orgId, email: inviteEmail, invited_by: userId, role: inviteRole as any,
-    });
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    setInviteEmail("");
-    toast({ title: "Convite enviado!" });
+    try {
+      const link = await criarConviteEquipe(orgId, inviteEmail, inviteRole, userId ?? null);
+      setUltimoConvite({ email: inviteEmail.trim().toLowerCase(), link });
+      setInviteEmail("");
+      toast({ title: "Convite criado", description: "Copie o link e envie para a pessoa." });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    }
   };
 
   const removeUser = async (uid: string) => {
@@ -705,7 +710,7 @@ function MembersTab({ orgId, userId }: { orgId: string | null; userId?: string }
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Convidar Membro</CardTitle>
-          <CardDescription className="text-[10px]">Envie convites por email com papel definido</CardDescription>
+          <CardDescription className="text-[10px]">Gera um link de acesso com o papel definido, para enviar pelo WhatsApp</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
@@ -717,8 +722,9 @@ function MembersTab({ orgId, userId }: { orgId: string | null; userId?: string }
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
-            <Button size="sm" className="h-8 text-xs" onClick={sendInvite}><UserPlus className="mr-1 h-3 w-3" />Convidar</Button>
+            <Button size="sm" className="h-8 text-xs" onClick={sendInvite}><UserPlus className="mr-1 h-3 w-3" />Gerar convite</Button>
           </div>
+          {ultimoConvite && <ConviteLink email={ultimoConvite.email} link={ultimoConvite.link} />}
         </CardContent>
       </Card>
 

@@ -515,7 +515,6 @@ export type Database = {
           first_name: string | null
           fonte: string | null
           id: string
-          imovel_interesse_id: string | null
           indicado_por_contact_id: string | null
           last_name: string | null
           lead_score: number | null
@@ -538,7 +537,6 @@ export type Database = {
           first_name?: string | null
           fonte?: string | null
           id?: string
-          imovel_interesse_id?: string | null
           indicado_por_contact_id?: string | null
           last_name?: string | null
           lead_score?: number | null
@@ -561,7 +559,6 @@ export type Database = {
           first_name?: string | null
           fonte?: string | null
           id?: string
-          imovel_interesse_id?: string | null
           indicado_por_contact_id?: string | null
           last_name?: string | null
           lead_score?: number | null
@@ -1208,47 +1205,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      imoveis: {
-        Row: {
-          bairro: string | null
-          cidade: string | null
-          created_at: string
-          id: string
-          org_id: string
-          status: string | null
-          tipologia: string | null
-          titulo: string | null
-        }
-        Insert: {
-          bairro?: string | null
-          cidade?: string | null
-          created_at?: string
-          id?: string
-          org_id: string
-          status?: string | null
-          tipologia?: string | null
-          titulo?: string | null
-        }
-        Update: {
-          bairro?: string | null
-          cidade?: string | null
-          created_at?: string
-          id?: string
-          org_id?: string
-          status?: string | null
-          tipologia?: string | null
-          titulo?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "imoveis_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

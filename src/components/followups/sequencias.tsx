@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarClock, ListPlus, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarClock, ListPlus, Loader2, Minus, Pencil, Plus, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/hooks/useOrg";
 import { useAuth } from "@/contexts/AuthContext";
@@ -61,10 +62,11 @@ export function useSequencias() {
 const resumoPassos = (passos: Passo[]) => passos.map((p) => `${p.dias} ${p.dias === 1 ? "dia" : "dias"}`).join(" · ");
 
 /* ------------------------------------------------------------------ */
-/* Editor (aba Sequências da tela de Follow-ups)                       */
+/* Editor (Configurações → Follow-ups)                                  */
 /* ------------------------------------------------------------------ */
 
 const PASSO_VAZIO = (ordem: number, dias: number): Passo => ({ ordem, dias, canal: "WhatsApp", mensagem: "" });
+const MAX_FOLLOWUPS = 15;
 
 function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onFechar: () => void }) {
   const { orgId } = useOrg();
@@ -80,14 +82,31 @@ function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onF
   const mudar = (i: number, campo: keyof Passo, valor: string | number) =>
     setPassos((ps) => ps.map((p, j) => (j === i ? { ...p, [campo]: valor } : p)));
 
+  // Quantidade de follow-ups: aumentar acrescenta no fim (7 dias depois do último),
+  // diminuir tira os últimos. O que já foi escrito nos que ficam não se perde.
+  const definirQuantidade = (n: number) => {
+    const alvo = Math.min(MAX_FOLLOWUPS, Math.max(1, Math.round(n) || 1));
+    setPassos((ps) => {
+      if (alvo <= ps.length) return ps.slice(0, alvo);
+      const novos = [...ps];
+      while (novos.length < alvo) {
+        novos.push(PASSO_VAZIO(novos.length + 1, (novos[novos.length - 1]?.dias ?? 0) + 7));
+      }
+      return novos;
+    });
+  };
+
   const salvar = async () => {
     if (!orgId) return;
-    const validos = passos.filter((p) => p.mensagem.trim());
     if (!nome.trim()) return toast({ title: "Dê um nome à sequência", variant: "destructive" });
-    if (!validos.length) return toast({ title: "Escreva a mensagem de pelo menos um passo", variant: "destructive" });
-    if (validos.some((p) => !Number.isFinite(p.dias) || p.dias < 0 || p.dias > 365)) {
+    const semMensagem = passos.findIndex((p) => !p.mensagem.trim());
+    if (semMensagem >= 0) {
+      return toast({ title: `Falta a mensagem do follow-up ${semMensagem + 1}`, variant: "destructive" });
+    }
+    if (passos.some((p) => !Number.isFinite(p.dias) || p.dias < 0 || p.dias > 365)) {
       return toast({ title: "Os dias precisam ficar entre 0 e 365", variant: "destructive" });
     }
+    const validos = passos;
     setSalvando(true);
     try {
       let id = inicial?.id;
@@ -134,9 +153,45 @@ function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onF
     <Card className="space-y-5 p-6">
       <div>
         <p className="eyebrow text-[11px]">{inicial ? "Editar sequência" : "Nova sequência"}</p>
-        <div className="mt-2 space-y-1.5">
-          <Label htmlFor="seq-nome">Nome</Label>
-          <Input id="seq-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Menopausa, Parou depois do valor" />
+        <div className="mt-2 grid gap-4 sm:grid-cols-[1fr_auto]">
+          <div className="space-y-1.5">
+            <Label htmlFor="seq-nome">Nome</Label>
+            <Input id="seq-nome" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Menopausa, Parou depois do valor" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="seq-qtd">Quantos follow-ups</Label>
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={passos.length <= 1}
+                onClick={() => definirQuantidade(passos.length - 1)}
+                aria-label="Menos um follow-up"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                id="seq-qtd"
+                type="number"
+                min={1}
+                max={MAX_FOLLOWUPS}
+                className="w-16 text-center"
+                value={passos.length}
+                onChange={(e) => definirQuantidade(Number(e.target.value))}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={passos.length >= MAX_FOLLOWUPS}
+                onClick={() => definirQuantidade(passos.length + 1)}
+                aria-label="Mais um follow-up"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -144,7 +199,7 @@ function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onF
         {passos.map((p, i) => (
           <div key={i} className="rounded-xl border p-4">
             <div className="flex flex-wrap items-end gap-3">
-              <span className="eyebrow pb-2 text-[10px]">Passo {String(i + 1).padStart(2, "0")}</span>
+              <span className="eyebrow pb-2 text-[10px]">Follow-up {String(i + 1).padStart(2, "0")}</span>
               <div className="space-y-1">
                 <Label className="text-xs">Depois de</Label>
                 <div className="flex items-center gap-2">
@@ -174,7 +229,7 @@ function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onF
                 className="ml-auto"
                 disabled={passos.length === 1}
                 onClick={() => setPassos((ps) => ps.filter((_, j) => j !== i))}
-                aria-label="Remover passo"
+                aria-label="Remover este follow-up"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -188,13 +243,6 @@ function EditorSequencia({ inicial, onFechar }: { inicial: Sequencia | null; onF
             />
           </div>
         ))}
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={() => setPassos((ps) => [...ps, PASSO_VAZIO(ps.length + 1, (ps[ps.length - 1]?.dias ?? 0) + 7)])}
-        >
-          <Plus className="h-4 w-4" /> Adicionar passo
-        </Button>
         <p className="text-xs text-muted-foreground">
           Escreva <strong>{"{nome}"}</strong> onde entra o primeiro nome do lead. Os dias contam a partir do dia em que a sequência é aplicada.
         </p>
@@ -364,7 +412,10 @@ export function AplicarSequencia({ dealId, onAplicada }: { dealId: string; onApl
       </div>
       {sequencias.filter((s) => s.ativa).length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          Nenhuma sequência criada ainda. Crie em Follow-ups, na aba Sequências.
+          Nenhuma sequência criada ainda.{" "}
+          <Link to="/settings?tab=followups" className="font-medium text-accent underline-offset-2 hover:underline">
+            Criar em Configurações → Follow-ups
+          </Link>
         </p>
       ) : (
         <>

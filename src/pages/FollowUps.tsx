@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { TemperaturaBadge } from "@/components/leads/LeadCard";
-import { SequenciasManager } from "@/components/followups/sequencias";
 
 type Row = {
   id: string;
@@ -317,22 +316,25 @@ function Calendario() {
 export default function FollowUps() {
   return (
     <div className="space-y-6">
-      <div>
-        <p className="eyebrow text-[11px]">Comercial</p>
-        <h1 className="mt-0.5 text-2xl font-bold">Follow-ups</h1>
-        <p className="text-sm text-muted-foreground">
-          Cada contato com a data e a mensagem pronta. Abra o WhatsApp, envie e marque como realizado.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="eyebrow text-[11px]">Comercial</p>
+          <h1 className="mt-0.5 text-2xl font-bold">Follow-ups</h1>
+          <p className="text-sm text-muted-foreground">
+            Cada contato com a data e a mensagem pronta. Abra o WhatsApp, envie e marque como realizado.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="gap-2">
+          <Link to="/settings?tab=followups"><ListOrdered className="h-4 w-4" /> Sequências</Link>
+        </Button>
       </div>
       <Tabs defaultValue="calendario">
         <TabsList>
           <TabsTrigger value="calendario" className="gap-1.5"><CalendarRange className="h-3.5 w-3.5" /> Calendário</TabsTrigger>
           <TabsTrigger value="lista" className="gap-1.5"><List className="h-3.5 w-3.5" /> Lista</TabsTrigger>
-          <TabsTrigger value="sequencias" className="gap-1.5"><ListOrdered className="h-3.5 w-3.5" /> Sequências</TabsTrigger>
         </TabsList>
         <TabsContent value="calendario" className="mt-4"><Calendario /></TabsContent>
         <TabsContent value="lista" className="mt-4"><Lista /></TabsContent>
-        <TabsContent value="sequencias" className="mt-4"><SequenciasManager /></TabsContent>
       </Tabs>
     </div>
   );

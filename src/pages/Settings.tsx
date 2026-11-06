@@ -34,6 +34,8 @@ import { DemoDataSection } from "@/components/settings/DemoDataSection";
 import { PermissionsAuditTab } from "@/components/settings/PermissionsAuditTab";
 import type { Database } from "@/integrations/supabase/types";
 import { ConviteLink, criarConviteEquipe } from "@/components/crm/ConviteLink";
+import { SequenciasManager } from "@/components/followups/sequencias";
+import { useSearchParams } from "react-router-dom";
 
 type PipelineStage = Database["public"]["Tables"]["pipeline_stages"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -41,6 +43,10 @@ type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export default function Settings() {
   const { user, profile } = useAuth();
   const { orgId } = useOrg();
+  // ?tab=followups abre direto na aba (atalho da tela de Follow-ups e da ficha do lead)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const aba = searchParams.get("tab") || "general";
+  const trocarAba = (v: string) => setSearchParams(v === "general" ? {} : { tab: v }, { replace: true });
 
   return (
     <div className="space-y-6">
@@ -49,10 +55,11 @@ export default function Settings() {
         <p className="text-muted-foreground">Gerencie seu perfil, organização e preferências</p>
       </div>
 
-      <Tabs defaultValue="general">
+      <Tabs value={aba} onValueChange={trocarAba}>
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="pipelines">Pipelines</TabsTrigger>
+          <TabsTrigger value="followups">Follow-ups</TabsTrigger>
           <TabsTrigger value="custom-fields">Campos</TabsTrigger>
           <TabsTrigger value="horarios">Horários</TabsTrigger>
           <TabsTrigger value="anuncios">Anúncios</TabsTrigger>
@@ -69,6 +76,17 @@ export default function Settings() {
         </TabsContent>
         <TabsContent value="pipelines" className="mt-4">
           <PipelinesTab orgId={orgId} />
+        </TabsContent>
+        <TabsContent value="followups" className="mt-4">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Sequências de follow-up</h2>
+              <p className="text-sm text-muted-foreground">
+                Defina quantos follow-ups cada sequência tem, em quantos dias cada um sai e a mensagem de cada um.
+              </p>
+            </div>
+            <SequenciasManager />
+          </div>
         </TabsContent>
         <TabsContent value="custom-fields" className="mt-4">
           <CustomFieldsTab orgId={orgId} />

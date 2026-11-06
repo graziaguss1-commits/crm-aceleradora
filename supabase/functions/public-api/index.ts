@@ -1,4 +1,7 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// SISA-SEC-2026-11-06: chave de clínica desativada não vale
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -17,12 +20,16 @@ async function verifyApiKey(sb: any, apiKey: string) {
 
   const { data: keyRecord, error } = await sb
     .from("api_keys")
-    .select("id,org_id,is_active")
+    .select("id,org_id,is_active,request_count")
     .eq("key_hash", hashHex)
     .eq("is_active", true)
     .single();
 
   if (error || !keyRecord) return null;
+
+  // Clínica desativada pela administração do SISA perde o acesso pela API também
+  const { data: org } = await sb.from("organizations").select("ativa").eq("id", keyRecord.org_id).maybeSingle();
+  if (!org?.ativa) return null;
 
   // Update last used and request count
   await sb.from("api_keys").update({

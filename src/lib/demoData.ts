@@ -203,9 +203,9 @@ export async function generateDemoData(orgId: string, userId: string) {
       appointment_status: appt.status,
       appointment_type: appt.type,
       duration_minutes: appt.duration,
-      professional_id: userId,
+      // activities.professional_id aponta para professionals (não para o usuário)
+      professional_id: profIds[i % profIds.length] ?? null,
       whatsapp_reminder_sent: appt.offsetDays < 0,
-      metadata: { demo_professional_id: profIds[i % profIds.length] },
     };
   });
   const { data: insertedAppts, error: aErr } = await sb
@@ -274,7 +274,7 @@ export async function generateDemoData(orgId: string, userId: string) {
     title: tagged(t),
     type: "task",
     contact_id: patientIds[i % patientIds.length],
-    professional_id: i % 2 === 0 ? userId : null,
+    user_id: i % 2 === 0 ? userId : null,
     due_date: daysFromNow(i - 1),
     body: "Tarefa de demonstração.",
   }));

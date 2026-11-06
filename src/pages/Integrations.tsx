@@ -872,8 +872,9 @@ function WebhooksTab({ orgId }: { orgId: string | null }) {
     fetchWebhooks();
   };
 
+  // A clínica é identificada pela chave de API (Configurações > API), não pela URL
   const inboundUrl = orgId
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-webhook?org_id=${orgId}`
+    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/inbound-webhook?key=SUA_CHAVE_DE_API`
     : "";
 
   return (
@@ -930,7 +931,7 @@ function WebhooksTab({ orgId }: { orgId: string | null }) {
         <CardHeader>
           <CardTitle className="text-sm">Webhook de Entrada</CardTitle>
           <CardDescription className="text-[10px]">
-            Receba dados de ferramentas externas (Zapier, Make, etc.) via POST
+            Receba dados de ferramentas externas (Zapier, Make, etc.) via POST. Troque SUA_CHAVE_DE_API por uma chave criada na aba API, ou envie a chave no cabeçalho Authorization: Bearer.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

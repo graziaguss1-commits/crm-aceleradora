@@ -1,3 +1,5 @@
+// SISA-SEC-2026-11-06: automação só por usuário da própria clínica
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -24,6 +26,26 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing automation_id or org_id" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Quem chama precisa ser usuário logado da própria clínica (clínica ativa).
+    // Antes qualquer um com os ids disparava a automação de outra clínica,
+    // inclusive envio de WhatsApp pelo número dela.
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    if (!jwt) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: authData } = await supabase.auth.getUser(jwt);
+    const callerId = authData?.user?.id;
+    const { data: callerProfile } = callerId
+      ? await supabase.from("profiles").select("org_id, organizations(ativa)").eq("id", callerId).maybeSingle()
+      : { data: null };
+    if (!callerProfile || callerProfile.org_id !== org_id || !(callerProfile as any).organizations?.ativa) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -135,6 +157,13 @@ Deno.serve(async (req) => {
   }
 });
 
+// activities.contact_id aponta para patients: só aceita paciente desta clínica
+async function pacienteDaClinica(supabase: any, orgId: string, id: unknown): Promise<string | null> {
+  if (!id) return null;
+  const { data } = await supabase.from("patients").select("id").eq("id", id).eq("org_id", orgId).maybeSingle();
+  return data?.id ?? null;
+}
+
 async function executeAction(supabase: any, orgId: string, action: any, payload: any) {
   const cfg = action.config || {};
 
@@ -148,7 +177,7 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
         title: cfg.title || "Tarefa automática",
         body: cfg.body || `Criada pela automação. Prioridade: ${cfg.priority || "medium"}`,
         due_date: dueDate.toISOString(),
-        contact_id: payload?.contact_id || null,
+        contact_id: await pacienteDaClinica(supabase, orgId, payload?.contact_id),
       });
       if (error) throw new Error(`create_task: ${error.message}`);
       return { created: true };
@@ -160,7 +189,7 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
         type: "note",
         title: "Nota automática",
         body: cfg.body || "Nota criada por automação",
-        contact_id: payload?.contact_id || null,
+        contact_id: await pacienteDaClinica(supabase, orgId, payload?.contact_id),
       });
       if (error) throw new Error(`create_note: ${error.message}`);
       return { created: true };
@@ -198,6 +227,7 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
           .from("patients")
           .select("phone, first_name, last_name")
           .eq("id", payload.patient_id)
+          .eq("org_id", orgId)
           .maybeSingle();
         if (p) {
           phone = p.phone;
@@ -209,6 +239,7 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
           .from("contacts")
           .select("phone, first_name, last_name")
           .eq("id", payload.contact_id)
+          .eq("org_id", orgId)
           .maybeSingle();
         if (c) {
           phone = c.phone;
@@ -245,16 +276,20 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
 
     case "move_deal_stage": {
       if (!payload?.deal_id) throw new Error("No deal_id in payload");
-      // Find stage by name
+      // pipeline_stages não tem org_id: a etapa é buscada no pipeline do
+      // próprio negócio, que precisa ser desta clínica
+      const { data: deal } = await supabase
+        .from("deals").select("id, pipeline_id").eq("id", payload.deal_id).eq("org_id", orgId).maybeSingle();
+      if (!deal) throw new Error("Negócio não encontrado nesta clínica");
       const { data: stages } = await supabase
         .from("pipeline_stages")
         .select("id,name")
-        .eq("org_id", orgId)
+        .eq("pipeline_id", deal.pipeline_id)
         .ilike("name", `%${cfg.to_stage}%`)
         .limit(1);
       const stageId = stages?.[0]?.id;
       if (!stageId) throw new Error(`Stage '${cfg.to_stage}' not found`);
-      const { error } = await supabase.from("deals").update({ stage_id: stageId }).eq("id", payload.deal_id);
+      const { error } = await supabase.from("deals").update({ stage_id: stageId }).eq("id", payload.deal_id).eq("org_id", orgId);
       if (error) throw new Error(`move_deal_stage: ${error.message}`);
       return { moved_to: stageId };
     }
@@ -272,7 +307,7 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
         }
       }
       if (!ownerId) throw new Error("No owner to assign");
-      const { error } = await supabase.from(entityTable).update({ owner_id: ownerId }).eq("id", entityId);
+      const { error } = await supabase.from(entityTable).update({ owner_id: ownerId }).eq("id", entityId).eq("org_id", orgId);
       if (error) throw new Error(`assign_owner: ${error.message}`);
       return { assigned: ownerId };
     }
@@ -287,8 +322,12 @@ async function executeAction(supabase: any, orgId: string, action: any, payload:
         existing = created;
       }
       if (payload?.deal_id) {
+        const { data: d } = await supabase.from("deals").select("id").eq("id", payload.deal_id).eq("org_id", orgId).maybeSingle();
+        if (!d) throw new Error("Negócio não encontrado nesta clínica");
         await supabase.from("deal_tags").insert({ deal_id: payload.deal_id, tag_id: existing.id });
       } else if (payload?.contact_id) {
+        const { data: c } = await supabase.from("contacts").select("id").eq("id", payload.contact_id).eq("org_id", orgId).maybeSingle();
+        if (!c) throw new Error("Contato não encontrado nesta clínica");
         await supabase.from("contact_tags").insert({ contact_id: payload.contact_id, tag_id: existing.id });
       }
       return { tag_added: cfg.tag_name };

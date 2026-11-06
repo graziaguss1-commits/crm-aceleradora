@@ -23,6 +23,7 @@ const routeLabels: Record<string, string> = {
   "/follow-ups": "Follow-ups",
   "/dashboard-comercial": "Dash. comercial",
   "/dashboard-marketing": "Dash. marketing",
+  "/relatorio-quinzenal": "Relatório quinzenal",
   "/activities": "Atividades",
   "/tasks": "Tarefas",
   "/reports": "Relatórios",
@@ -62,7 +63,7 @@ export function AppHeader({ onOpenSearch, actions }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 sm:gap-4 border-b border-border bg-background/80 px-3 sm:px-4 backdrop-blur-sm" role="banner">
+    <header className="print:hidden sticky top-0 z-30 flex h-14 items-center gap-2 sm:gap-4 border-b border-border bg-background/80 px-3 sm:px-4 backdrop-blur-sm" role="banner">
       <SidebarTrigger className="-ml-1" aria-label="Alternar sidebar" />
 
       <Breadcrumb className="flex-1 hidden sm:flex">

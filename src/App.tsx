@@ -29,6 +29,7 @@ const Pipeline = lazy(() => import("./pages/Pipeline"));
 const FollowUps = lazy(() => import("./pages/FollowUps"));
 const DashboardComercial = lazy(() => import("./pages/DashboardComercial"));
 const DashboardMarketing = lazy(() => import("./pages/DashboardMarketing"));
+const RelatorioQuinzenal = lazy(() => import("./pages/RelatorioQuinzenal"));
 
 // SISA
 const Patients = lazy(() => import("./pages/Patients"));
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/follow-ups" element={<SuspenseRoute><FollowUps /></SuspenseRoute>} />
                 <Route path="/dashboard-comercial" element={<SuspenseRoute><DashboardComercial /></SuspenseRoute>} />
                 <Route path="/dashboard-marketing" element={<SuspenseRoute><DashboardMarketing /></SuspenseRoute>} />
+                <Route path="/relatorio-quinzenal" element={<SuspenseRoute><RelatorioQuinzenal /></SuspenseRoute>} />
                 <Route path="/tasks" element={<SuspenseRoute><Tasks /></SuspenseRoute>} />
                 <Route path="/reports" element={<SuspenseRoute><Reports /></SuspenseRoute>} />
                 <Route path="/automations" element={<SuspenseRoute><Automations /></SuspenseRoute>} />

@@ -9,6 +9,9 @@ const OBJECOES_INICIAIS = [
   "Quer plano de saúde",
   "Consultou o cônjuge",
   "Sumiu / não respondeu",
+  // Motivos do relatório quinzenal da Aceleradora
+  "Sem perfil para o tratamento",
+  "Foi para outra clínica",
 ];
 
 // Mesma ordem de STAGE_NAMES

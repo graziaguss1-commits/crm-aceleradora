@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Megaphone,
   UserPlus,
+  ClipboardList,
 } from "lucide-react";
 import { HelpCenter } from "@/components/help/HelpCenter";
 import { NavLink } from "@/components/NavLink";
@@ -59,6 +60,7 @@ const atendimentoItems = [
 const resultadosItems = [
   { title: "Dash. comercial", url: "/dashboard-comercial", icon: TrendingUp },
   { title: "Dash. marketing", url: "/dashboard-marketing", icon: Megaphone },
+  { title: "Relatório quinzenal", url: "/relatorio-quinzenal", icon: ClipboardList },
   { title: "Relatórios",      url: "/reports",             icon: BarChart3 },
   { title: "Metas",           url: "/health-goals",        icon: Target },
 ];

@@ -140,6 +140,19 @@
   }
 }
 
+/* Impressão (Relatório quinzenal → PDF): só o conteúdo da página */
+@media print {
+  .peer[data-side],
+  [aria-label="Onboarding"],
+  .fixed.bottom-5.right-5,
+  nav[aria-label="Navegação principal mobile"] {
+    display: none !important;
+  }
+  main { padding: 0 !important; }
+  body { background: #fff !important; }
+  .break-inside-avoid { break-inside: avoid; }
+}
+
 /* Smooth scrollbar for kanban */
 .overflow-x-auto {
   scrollbar-width: thin;

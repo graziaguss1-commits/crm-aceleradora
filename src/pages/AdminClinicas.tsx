@@ -155,8 +155,8 @@ export default function AdminClinicas() {
         </p>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-        <Card className="p-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+        <Card className="min-w-0 p-6">
           <p className="eyebrow text-[11px]">Nova clínica</p>
           <h2 className="mt-0.5 text-lg font-bold">Liberar acesso</h2>
           <form onSubmit={liberar} className="mt-4 space-y-3">
@@ -176,7 +176,7 @@ export default function AdminClinicas() {
           </form>
         </Card>
 
-        <Card className="p-6">
+        <Card className="min-w-0 p-6">
           <p className="eyebrow text-[11px]">Convite</p>
           <h2 className="mt-0.5 text-lg font-bold">{convite ? convite.clinica : "Link de acesso"}</h2>
           {convite ? (
@@ -184,9 +184,9 @@ export default function AdminClinicas() {
               <p className="text-sm text-muted-foreground">
                 Mande para <strong className="text-foreground">{convite.email}</strong>. O link vale por 30 dias e só pode ser usado uma vez.
               </p>
-              <div className="flex items-center gap-2 rounded-xl border bg-muted/40 px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-muted/40 px-3 py-2">
                 <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="truncate font-mono text-xs">{convite.link}</span>
+                <span className="min-w-0 truncate font-mono text-xs">{convite.link}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" className="gap-2" onClick={() => copiar(convite.link, "Link copiado")}>

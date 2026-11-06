@@ -37,13 +37,13 @@ export function ConviteLink({ email, link }: { email: string; link: string }) {
   };
 
   return (
-    <div className="mt-3 space-y-2 rounded-xl border bg-muted/30 p-3">
+    <div className="mt-3 min-w-0 space-y-2 rounded-xl border bg-muted/30 p-3">
       <p className="text-xs text-muted-foreground">
         Convite criado para <strong className="text-foreground">{email}</strong>. Envie o link abaixo; ele só pode ser usado uma vez.
       </p>
-      <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
+      <div className="flex min-w-0 items-center gap-2 rounded-lg border bg-background px-3 py-2">
         <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className="truncate font-mono text-xs">{link}</span>
+        <span className="min-w-0 truncate font-mono text-xs">{link}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => copiar(link, "Link copiado")}>

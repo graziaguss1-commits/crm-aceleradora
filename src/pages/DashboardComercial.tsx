@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { BarList, FiltroPeriodo, MetricCard } from "@/components/dashboards/DashboardBits";
-import { TEMPERATURA_LABELS } from "@/components/leads/constants";
+import { STAGES_AGENDADOS, STAGE_COMPARECEU, TEMPERATURA_LABELS } from "@/components/leads/constants";
 import {
   ehConvertido,
   filtrarLeads,
@@ -23,10 +23,21 @@ export default function DashboardComercial() {
   const m = useMemo(() => {
     const filtrados = filtrarLeads(leads, { periodo, custom });
     const convertidos = filtrados.filter((l) => ehConvertido(l, stageById)).length;
+    // Comparecimento só conta consulta que já aconteceu ou já falhou:
+    // quem está em "Agendado" ainda não teve a data.
+    const etapa = (l: (typeof filtrados)[number]) => (l.stage_id ? stageById.get(l.stage_id)?.name : undefined);
+    const compareceram = filtrados.filter((l) => etapa(l) === STAGE_COMPARECEU).length;
+    const resolvidos = filtrados.filter((l) => {
+      const nome = etapa(l);
+      return !!nome && STAGES_AGENDADOS.includes(nome) && nome !== "Agendado";
+    }).length;
     return {
       novos: filtrados.length,
       convertidos,
       conversao: taxa(convertidos, filtrados.length),
+      compareceram,
+      resolvidos,
+      comparecimento: taxa(compareceram, resolvidos),
       temperaturas: porTemperatura(filtrados, stageById),
       objecoes: rankingObjecoes(filtrados, objecoesPorDeal),
       indicadores: rankingIndicadores(filtrados, stageById, nomesDeContatos),
@@ -55,7 +66,7 @@ export default function DashboardComercial() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard comercial</h1>
           <p className="text-sm text-muted-foreground">
-            Conversão, temperatura da base, objeções e quem mais indica.
+            Agendamentos, comparecimento, temperatura da base, objeções e quem mais indica.
           </p>
         </div>
         <FiltroPeriodo
@@ -66,13 +77,19 @@ export default function DashboardComercial() {
         />
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Novos leads" value={m.novos} />
-        <MetricCard label="Convertidos" value={m.convertidos} tone="positivo" />
+        <MetricCard label="Agendados" value={m.convertidos} tone="positivo" />
         <MetricCard
-          label="Taxa de conversão"
+          label="Taxa de agendamento"
           value={formatarTaxa(m.conversao)}
-          hint={`${m.convertidos} de ${m.novos} leads`}
+          hint={`${m.convertidos} de ${m.novos} leads agendaram`}
+          tone="positivo"
+        />
+        <MetricCard
+          label="Taxa de comparecimento"
+          value={formatarTaxa(m.comparecimento)}
+          hint={m.resolvidos ? `${m.compareceram} de ${m.resolvidos} consultas já realizadas ou perdidas` : "Nenhuma consulta realizada ainda"}
           tone="positivo"
         />
       </section>
@@ -83,7 +100,7 @@ export default function DashboardComercial() {
             key={t.temperatura}
             label={`Leads ${TEMPERATURA_LABELS[t.temperatura].toLowerCase()}s`}
             value={t.total}
-            hint={`${formatarTaxa(t.participacao)} da base · converte ${formatarTaxa(t.conversao)}`}
+            hint={`${formatarTaxa(t.participacao)} da base · agenda ${formatarTaxa(t.conversao)}`}
             tone={t.temperatura}
           />
         ))}

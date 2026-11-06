@@ -85,9 +85,9 @@ export default function DashboardMarketing() {
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <MetricCard label="Total de leads" value={m.total} />
-        <MetricCard label="Conversões" value={m.convertidos} tone="positivo" />
+        <MetricCard label="Agendados" value={m.convertidos} tone="positivo" />
         <MetricCard
-          label="Taxa de conversão"
+          label="Taxa de agendamento"
           value={formatarTaxa(m.conversao)}
           hint={canal === TODOS ? "Todos os canais" : canal}
           tone="positivo"
@@ -100,7 +100,7 @@ export default function DashboardMarketing() {
             key={t.temperatura}
             label={`${TEMPERATURA_LABELS[t.temperatura]}s`}
             value={t.total}
-            hint={`${formatarTaxa(t.participacao)} dos leads · converte ${formatarTaxa(t.conversao)}`}
+            hint={`${formatarTaxa(t.participacao)} dos leads · agenda ${formatarTaxa(t.conversao)}`}
             tone={t.temperatura}
           />
         ))}

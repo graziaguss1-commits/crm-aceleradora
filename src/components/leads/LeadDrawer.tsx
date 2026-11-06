@@ -19,9 +19,10 @@ import { Separator } from "@/components/ui/separator";
 import { CalendarClock, Check, Plus, Trash2, ArrowRight, History } from "lucide-react";
 import { TagPicker } from "./TagPicker";
 import {
-  CANAIS, FOLLOWUP_CANAIS, TEMPERATURAS, formatCurrency, isOverdue, leadName,
+  CANAIS, FOLLOWUP_CANAIS, STAGE_PERDIDO, TEMPERATURAS, formatCurrency, isOverdue, leadName,
   type FollowUpCanal, type Lead, type Temperatura,
 } from "./constants";
+import { ObjecoesDialog } from "./ObjecoesDialog";
 
 interface Props {
   lead: Lead | null;
@@ -69,6 +70,12 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
 
   const [novaObjecao, setNovaObjecao] = useState("");
 
+  // Perda pela ficha: mesmo motivo obrigatório do arrastar no Pipeline.
+  // As objeções escolhidas ficam guardadas até o "Salvar".
+  const [lossOpen, setLossOpen] = useState(false);
+  const [lossObjecoes, setLossObjecoes] = useState<string[]>([]);
+  const [stageAntesDaPerda, setStageAntesDaPerda] = useState("");
+
   useEffect(() => {
     if (!lead) return;
     const c = lead.contact;
@@ -89,6 +96,8 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
     setShowFuForm(false);
     setDoneId(null);
     setResultado("");
+    setLossObjecoes([]);
+    setLossOpen(false);
   }, [lead]);
 
   const stageName = useMemo(
@@ -107,6 +116,14 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
 
   const saveDados = async () => {
     if (!lead || !orgId) return;
+    const ficaPerdido = stageName(form.stage_id) === STAGE_PERDIDO;
+    const virouPerdido = ficaPerdido && stageName(lead.stage_id) !== STAGE_PERDIDO;
+    if (virouPerdido && !lossObjecoes.length) {
+      toast({ title: "Motivo da perda obrigatório", description: "Escolha o motivo antes de marcar o lead como perdido.", variant: "destructive" });
+      setStageAntesDaPerda(lead.stage_id ?? "");
+      setLossOpen(true);
+      return;
+    }
     setSaving(true);
     try {
       if (lead.contact_id) {
@@ -145,10 +162,25 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
           value: form.value ? Number(form.value) : 0,
           dor_relatada: form.dor_relatada.trim() || null,
           stage_id: form.stage_id || null,
+          status: (ficaPerdido ? "lost" : "open") as "lost" | "open",
           title: [form.first_name, form.last_name].filter(Boolean).join(" ") || lead.title,
         })
         .eq("id", lead.id);
       if (dErr) throw dErr;
+
+      if (virouPerdido) {
+        const { error: oErr } = await supabase.from("deal_objecoes").upsert(
+          lossObjecoes.map((objecao_id) => ({
+            org_id: orgId,
+            deal_id: lead.id,
+            objecao_id,
+            created_by: user?.id ?? null,
+          })),
+          { onConflict: "deal_id,objecao_id", ignoreDuplicates: true },
+        );
+        if (oErr) throw oErr;
+        setLossObjecoes([]);
+      }
 
       toast({ title: "Lead atualizado" });
       refresh();
@@ -306,7 +338,19 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
               </div>
               <div className="space-y-1.5">
                 <Label>Etapa</Label>
-                <Select value={form.stage_id} onValueChange={(v) => setForm({ ...form, stage_id: v })}>
+                <Select
+                  value={form.stage_id}
+                  onValueChange={(v) => {
+                    const vaiPerder = stageName(v) === STAGE_PERDIDO && stageName(lead?.stage_id) !== STAGE_PERDIDO;
+                    if (vaiPerder) {
+                      setStageAntesDaPerda(form.stage_id);
+                      setLossOpen(true);
+                    } else {
+                      setLossObjecoes([]);
+                    }
+                    setForm({ ...form, stage_id: v });
+                  }}
+                >
                   <SelectTrigger><SelectValue placeholder="Etapa" /></SelectTrigger>
                   <SelectContent>
                     {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -515,6 +559,18 @@ export function LeadDrawer({ lead, stages, currency, open, onOpenChange, onChang
           </TabsContent>
         </Tabs>
       </SheetContent>
+      <ObjecoesDialog
+        open={lossOpen}
+        onOpenChange={setLossOpen}
+        onConfirm={(ids) => {
+          setLossObjecoes(ids);
+          setForm((f) => ({ ...f, stage_id: stages.find((st) => st.name === STAGE_PERDIDO)?.id ?? f.stage_id }));
+        }}
+        onCancel={() => {
+          setLossObjecoes([]);
+          setForm((f) => ({ ...f, stage_id: stageAntesDaPerda || lead?.stage_id || f.stage_id }));
+        }}
+      />
     </Sheet>
   );
 }

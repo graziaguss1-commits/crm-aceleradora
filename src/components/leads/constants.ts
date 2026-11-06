@@ -38,22 +38,34 @@ export const TAG_CATEGORIA_LABELS: Record<TagCategoria, string> = {
  *  ja tem campo proprio para isso. */
 export const TAG_CATEGORIAS_DISPONIVEIS: TagCategoria[] = ["interesse", "anuncio", "objecao", "geral"];
 
+/** Funil ensinado na Aceleradora SISA (encontro 3). A ordem vira a posição
+ *  das colunas no Pipeline. Lógica que depende de etapa usa as constantes
+ *  abaixo, nunca o índice. */
 export const STAGE_NAMES = [
-  "Novo Lead",
-  "Parou Antes do Valor",
-  "Parou Depois do Valor",
-  "Ganho",
+  "Lead novo",
+  "Em conversa",
+  "Qualificado",
+  "Agendado",
+  "Compareceu",
+  "Não compareceu",
   "Perdido",
 ] as const;
 
 export const DEFAULT_PIPELINE_NAME = "Comercial";
 export const STAGE_PERDIDO = "Perdido";
 
+/** Conversão da secretária = agendamento. Quem chegou a Agendado conta como
+ *  convertido mesmo que depois falte; o comparecimento tem taxa própria. */
+export const STAGES_AGENDADOS: readonly string[] = ["Agendado", "Compareceu", "Não compareceu"];
+export const STAGE_COMPARECEU = "Compareceu";
+
 export const STAGE_BORDER_COLORS = [
   "border-t-sky-500",
+  "border-t-indigo-500",
   "border-t-violet-500",
   "border-t-amber-500",
   "border-t-emerald-500",
+  "border-t-orange-500",
   "border-t-rose-500",
 ];
 

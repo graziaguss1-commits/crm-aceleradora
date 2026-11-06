@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrg } from "@/hooks/useOrg";
 import { useLeadsBoard, type Stage } from "@/hooks/useLeads";
-import type { Lead, Temperatura } from "@/components/leads/constants";
+import { STAGES_AGENDADOS, STAGE_COMPARECEU, type Lead, type Temperatura } from "@/components/leads/constants";
 
 export const PERIODOS = [
   { value: "7", label: "Últimos 7 dias" },
@@ -22,7 +22,6 @@ export interface PeriodoCustom {
   ate: string;
 }
 
-export const STAGE_GANHO = "Ganho";
 
 export interface Contagem {
   label: string;
@@ -118,8 +117,14 @@ export function formatarTaxa(valor: number): string {
   return `${valor.toFixed(1).replace(".", ",")}%`;
 }
 
+/** Convertido = agendou (Agendado, Compareceu ou Não compareceu). */
 export function ehConvertido(lead: Lead, stageById: Map<string, Stage>): boolean {
-  return lead.stage_id ? stageById.get(lead.stage_id)?.name === STAGE_GANHO : false;
+  const nome = lead.stage_id ? stageById.get(lead.stage_id)?.name : undefined;
+  return !!nome && STAGES_AGENDADOS.includes(nome);
+}
+
+export function compareceu(lead: Lead, stageById: Map<string, Stage>): boolean {
+  return lead.stage_id ? stageById.get(lead.stage_id)?.name === STAGE_COMPARECEU : false;
 }
 
 export function filtrarLeads(

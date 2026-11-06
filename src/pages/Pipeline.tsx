@@ -115,7 +115,8 @@ export default function Pipeline() {
   }, [stages, filtered]);
 
   const moveLead = async (leadId: string, stageId: string) => {
-    const { error } = await supabase.from("deals").update({ stage_id: stageId }).eq("id", leadId);
+    // Sai de "Perdido" (ou anda no funil): o negócio volta a ficar aberto.
+    const { error } = await supabase.from("deals").update({ stage_id: stageId, status: "open" }).eq("id", leadId);
     if (error) {
       toast({ title: "Erro ao mover lead", description: error.message, variant: "destructive" });
       return;

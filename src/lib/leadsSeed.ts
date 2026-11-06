@@ -11,11 +11,12 @@ const OBJECOES_INICIAIS = [
   "Sumiu / não respondeu",
 ];
 
-const STAGE_PROBABILITIES = [10, 30, 60, 100, 0];
+// Mesma ordem de STAGE_NAMES
+const STAGE_PROBABILITIES = [10, 20, 40, 70, 100, 30, 0];
 
 /**
  * Garante a configuração inicial do CRM de leads (idempotente):
- * pipeline "Comercial" com 5 etapas, tags de temperatura e objeções padrão.
+ * pipeline "Comercial" com as etapas de STAGE_NAMES, tags de temperatura e objeções padrão.
  * Retorna o id do pipeline comercial.
  */
 export async function seedLeadsConfig(orgId: string): Promise<string | null> {

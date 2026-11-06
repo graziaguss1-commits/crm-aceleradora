@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TagPicker } from "./TagPicker";
-import { CANAIS, TEMPERATURAS, type Temperatura } from "./constants";
+import { CANAIS, STAGE_PERDIDO, TEMPERATURAS, type Temperatura } from "./constants";
 import type { Stage } from "@/hooks/useLeads";
 
 interface Props {
@@ -215,7 +215,8 @@ export function LeadCreateModal({ open, onOpenChange, stages, pipelineId, onCrea
               <Select value={defaultStage} onValueChange={(v) => set({ stageId: v })}>
                 <SelectTrigger><SelectValue placeholder="Etapa" /></SelectTrigger>
                 <SelectContent>
-                  {stages.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                  {/* Lead não nasce perdido: perda exige motivo, registrado no Pipeline ou na ficha */}
+                  {stages.filter((s) => s.name !== STAGE_PERDIDO).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

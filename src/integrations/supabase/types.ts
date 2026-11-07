@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -97,6 +97,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "activities_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "activities_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
@@ -108,6 +115,13 @@ export type Database = {
             columns: ["professional_id"]
             isOneToOne: false
             referencedRelation: "professionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -761,6 +775,36 @@ export type Database = {
           },
         ]
       }
+      deal_tags: {
+        Row: {
+          deal_id: string
+          tag_id: string
+        }
+        Insert: {
+          deal_id: string
+          tag_id: string
+        }
+        Update: {
+          deal_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_tags_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deals: {
         Row: {
           company_id: string | null
@@ -1046,10 +1090,14 @@ export type Database = {
           data_agendada: string
           deal_id: string | null
           id: string
+          mensagem: string | null
           observacao: string | null
           org_id: string
+          passo_ordem: number | null
+          passo_total: number | null
           realizado_em: string | null
           resultado: string | null
+          sequencia_id: string | null
           status: string
           updated_at: string
         }
@@ -1061,10 +1109,14 @@ export type Database = {
           data_agendada?: string
           deal_id?: string | null
           id?: string
+          mensagem?: string | null
           observacao?: string | null
           org_id: string
+          passo_ordem?: number | null
+          passo_total?: number | null
           realizado_em?: string | null
           resultado?: string | null
+          sequencia_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1076,10 +1128,14 @@ export type Database = {
           data_agendada?: string
           deal_id?: string | null
           id?: string
+          mensagem?: string | null
           observacao?: string | null
           org_id?: string
+          passo_ordem?: number | null
+          passo_total?: number | null
           realizado_em?: string | null
           resultado?: string | null
+          sequencia_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -1110,6 +1166,13 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_ups_sequencia_id_fkey"
+            columns: ["sequencia_id"]
+            isOneToOne: false
+            referencedRelation: "sequencias_followup"
             referencedColumns: ["id"]
           },
         ]
@@ -1529,6 +1592,65 @@ export type Database = {
           },
         ]
       }
+      onboarding_progress: {
+        Row: {
+          completed: boolean | null
+          contact_created: boolean | null
+          created_at: string | null
+          deal_created: boolean | null
+          demo_loaded: boolean | null
+          dismissed_at: string | null
+          email_connected: boolean | null
+          id: string
+          member_invited: boolean | null
+          org_id: string
+          pipeline_created: boolean | null
+          profile_configured: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          contact_created?: boolean | null
+          created_at?: string | null
+          deal_created?: boolean | null
+          demo_loaded?: boolean | null
+          dismissed_at?: string | null
+          email_connected?: boolean | null
+          id?: string
+          member_invited?: boolean | null
+          org_id: string
+          pipeline_created?: boolean | null
+          profile_configured?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          contact_created?: boolean | null
+          created_at?: string | null
+          deal_created?: boolean | null
+          demo_loaded?: boolean | null
+          dismissed_at?: string | null
+          email_connected?: boolean | null
+          id?: string
+          member_invited?: boolean | null
+          org_id?: string
+          pipeline_created?: boolean | null
+          profile_configured?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_progress_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_secrets: {
         Row: {
           created_at: string
@@ -1566,6 +1688,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          ativa: boolean
           created_at: string
           id: string
           name: string
@@ -1575,6 +1698,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ativa?: boolean
           created_at?: string
           id?: string
           name: string
@@ -1584,6 +1708,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ativa?: boolean
           created_at?: string
           id?: string
           name?: string
@@ -1893,6 +2018,21 @@ export type Database = {
           },
         ]
       }
+      platform_admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       professionals: {
         Row: {
           avatar_url: string | null
@@ -2033,6 +2173,63 @@ export type Database = {
           },
         ]
       }
+      relatorios_quinzenais: {
+        Row: {
+          acao_proximos: string | null
+          created_at: string
+          fim: string
+          id: string
+          inicio: string
+          o_que_funcionou: string | null
+          onde_perdemos: string | null
+          org_id: string
+          responsavel: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acao_proximos?: string | null
+          created_at?: string
+          fim: string
+          id?: string
+          inicio: string
+          o_que_funcionou?: string | null
+          onde_perdemos?: string | null
+          org_id: string
+          responsavel?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acao_proximos?: string | null
+          created_at?: string
+          fim?: string
+          id?: string
+          inicio?: string
+          o_que_funcionou?: string | null
+          onde_perdemos?: string | null
+          org_id?: string
+          responsavel?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relatorios_quinzenais_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relatorios_quinzenais_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       risk_rules: {
         Row: {
           config: Json
@@ -2141,6 +2338,102 @@ export type Database = {
           },
           {
             foreignKeyName: "segments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sequencia_passos: {
+        Row: {
+          canal: string
+          created_at: string
+          dias: number
+          id: string
+          mensagem: string
+          ordem: number
+          org_id: string
+          sequencia_id: string
+        }
+        Insert: {
+          canal?: string
+          created_at?: string
+          dias: number
+          id?: string
+          mensagem: string
+          ordem: number
+          org_id: string
+          sequencia_id: string
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          dias?: number
+          id?: string
+          mensagem?: string
+          ordem?: number
+          org_id?: string
+          sequencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequencia_passos_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sequencia_passos_sequencia_id_fkey"
+            columns: ["sequencia_id"]
+            isOneToOne: false
+            referencedRelation: "sequencias_followup"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sequencias_followup: {
+        Row: {
+          ativa: boolean
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativa?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativa?: boolean
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequencias_followup_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sequencias_followup_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2329,6 +2622,40 @@ export type Database = {
     }
     Functions: {
       _pick_next_participant: { Args: { _rule_id: string }; Returns: string }
+      admin_criar_clinica: {
+        Args: { p_email_dono: string; p_nome: string }
+        Returns: Json
+      }
+      admin_definir_ativa: {
+        Args: { p_ativa: boolean; p_org: string }
+        Returns: undefined
+      }
+      admin_gerar_convite: {
+        Args: { p_email: string; p_org: string }
+        Returns: string
+      }
+      admin_listar_clinicas: {
+        Args: never
+        Returns: {
+          ativa: boolean
+          convites_pendentes: number
+          criada_em: string
+          donos: string
+          id: string
+          leads_30d: number
+          nome: string
+          usuarios: number
+        }[]
+      }
+      aplicar_sequencia_followup: {
+        Args: {
+          p_deal: string
+          p_hora?: string
+          p_inicio?: string
+          p_sequencia: string
+        }
+        Returns: number
+      }
       assign_lead_owner: {
         Args: { _context?: Json; _org_id: string; _source: string }
         Returns: string
@@ -2337,6 +2664,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: Json
       }
+      convite_info: { Args: { p_token: string }; Returns: Json }
       create_organization_for_user: {
         Args: {
           p_name: string
@@ -2370,6 +2698,12 @@ export type Database = {
       initialize_org_owner: {
         Args: { p_org_id: string; p_user_id: string }
         Returns: undefined
+      }
+      is_platform_admin: { Args: never; Returns: boolean }
+      minha_clinica_situacao: { Args: never; Returns: Json }
+      relatorio_quinzenal: {
+        Args: { p_fim: string; p_inicio: string }
+        Returns: Json
       }
       simulate_distribution: {
         Args: { _count?: number; _rule_id: string }
